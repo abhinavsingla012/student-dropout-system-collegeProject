@@ -1,0 +1,68 @@
+/* ── CSS Variables ── */
+:root {
+  --color-primary:    #1f4e79;
+  --color-secondary:  #2e75b6;
+  --color-accent:     #d6e4f0;
+  --color-bg:         #f4f7fb;
+  --color-surface:    #ffffff;
+  --color-text:       #1a1a2e;
+  --color-muted:      #666666;
+  --color-risk-low:   #1d6f42;
+  --color-risk-med:   #c65a11;
+  --color-risk-high:  #9b1c1c;
+  --radius:           8px;
+  --shadow:           0 2px 8px rgba(0,0,0,0.08);
+  --font:             'Segoe UI', Arial, sans-serif;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; flex-direction: column; }
+a { color: var(--color-secondary); text-decoration: none; }
+
+/* ── Header ── */
+.app-header {
+  background: var(--color-primary);
+  color: white;
+  padding: 0 2rem;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+}
+.header-brand { display: flex; align-items: center; gap: 0.5rem; }
+.brand-icon { font-size: 1.4rem; }
+.brand-name { font-size: 1.2rem; font-weight: 700; color: white; }
+.brand-full { font-size: 0.8rem; color: #aac4e0; display: none; }
+
+/* ── Nav ── */
+.app-nav { display: flex; gap: 0.5rem; }
+.nav-link {
+  color: #aac4e0;
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  transition: background 0.2s, color 0.2s;
+}
+.nav-link:hover, .nav-link.active {
+  background: var(--color-secondary);
+  color: white;
+}
+
+/* ── Main ── */
+.app-main { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+/* ── Footer ── */
+.app-footer { background: var(--color-primary); color: #aac4e0; text-align: center; padding: 1rem; font-size: 0.8rem; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .app-header { padding: 0 1rem; }
+  .brand-full { display: none !important; }
+  .nav-link { padding: 0.4rem 0.6rem; font-size: 0.8rem; }
+  .app-main { padding: 1rem; }
+}
+@media (min-width: 1024px) {
+  .brand-full { display: inline; }
+}

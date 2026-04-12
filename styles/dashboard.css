@@ -1,0 +1,32 @@
+/* ── Page layout ── */
+.page { animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-title { font-size: 1.8rem; color: var(--color-primary); margin-bottom: 0.25rem; }
+.page-subtitle { color: var(--color-muted); margin-bottom: 2rem; font-size: 0.95rem; }
+.coming-soon { color: var(--color-muted); font-style: italic; margin-top: 2rem; }
+
+/* ── Stat cards ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.stat-card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: 4px solid var(--color-secondary);
+}
+.stat-card.risk-high { border-top-color: var(--color-risk-high); }
+.stat-card.risk-med  { border-top-color: var(--color-risk-med);  }
+.stat-card.risk-low  { border-top-color: var(--color-risk-low);  }
+
+.stat-number { font-size: 2.2rem; font-weight: 700; color: var(--color-primary); }
+.stat-label  { font-size: 0.85rem; color: var(--color-muted); text-align: center; }
