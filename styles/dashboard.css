@@ -30,3 +30,98 @@
 
 .stat-number { font-size: 2.2rem; font-weight: 700; color: var(--color-primary); }
 .stat-label  { font-size: 0.85rem; color: var(--color-muted); text-align: center; }
+
+/* ── Section header (title + filter row) ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.section-title { font-size: 1.1rem; font-weight: 600; color: var(--color-primary); }
+
+/* ── Filter dropdown ── */
+.filter-select {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #ccd6e0;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  background: white;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+/* ── Student grid ── */
+.student-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* ── Student card ── */
+.student-card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-left: 5px solid var(--color-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.student-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+.student-card.high { border-left-color: var(--color-risk-high); }
+.student-card.medium { border-left-color: var(--color-risk-med); }
+.student-card.low { border-left-color: var(--color-risk-low); }
+
+/* ── Card header: name + badge ── */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.student-name { font-weight: 600; font-size: 1rem; color: var(--color-primary); }
+
+/* ── Risk badge ── */
+.risk-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.risk-badge.high { background: #fde8e8; color: var(--color-risk-high); }
+.risk-badge.medium { background: #fef0e6; color: var(--color-risk-med); }
+.risk-badge.low { background: #e6f4ec; color: var(--color-risk-low); }
+
+/* ── Card details ── */
+.card-details { font-size: 0.85rem; color: var(--color-muted); display: flex; flex-direction: column; gap: 0.2rem; }
+.card-details span { display: flex; justify-content: space-between; }
+.card-details strong { color: var(--color-text); }
+
+/* ── Risk score bar ── */
+.risk-bar-wrap { margin-top: 0.25rem; }
+.risk-bar-label { font-size: 0.78rem; color: var(--color-muted); margin-bottom: 0.2rem; display: flex; justify-content: space-between; }
+.risk-bar-bg { background: #e8edf2; border-radius: 999px; height: 6px; overflow: hidden; }
+.risk-bar-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+.risk-bar-fill.high   { background: var(--color-risk-high); }
+.risk-bar-fill.medium { background: var(--color-risk-med);  }
+.risk-bar-fill.low    { background: var(--color-risk-low);  }
+
+/* ── Empty state ── */
+.empty-state { text-align: center; padding: 3rem; color: var(--color-muted); font-style: italic; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .student-grid { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
