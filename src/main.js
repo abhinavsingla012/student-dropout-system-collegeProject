@@ -1,23 +1,23 @@
-const app = document.getElementById('app')!;
+const app = document.getElementById('app');
 
-// ── Mock student data (until Day 4 when we fetch from API) ──
+// ── Mock student data ──
 const students = [
-  { id: 1, name: "Priya Sharma",    grade: 9,  attendance: 62, gpa: 5.2, riskScore: 78, status: "high"   },
-  { id: 2, name: "Arjun Mehta",     grade: 10, attendance: 88, gpa: 7.8, riskScore: 22, status: "low"    },
-  { id: 3, name: "Sneha Patel",     grade: 8,  attendance: 74, gpa: 6.1, riskScore: 55, status: "medium" },
-  { id: 4, name: "Rohit Kumar",     grade: 11, attendance: 55, gpa: 4.8, riskScore: 83, status: "high"   },
-  { id: 5, name: "Anjali Singh",    grade: 9,  attendance: 91, gpa: 8.4, riskScore: 15, status: "low"    },
-  { id: 6, name: "Vikram Nair",     grade: 10, attendance: 69, gpa: 5.9, riskScore: 61, status: "medium" },
-  { id: 7, name: "Meena Iyer",      grade: 8,  attendance: 48, gpa: 4.2, riskScore: 91, status: "high"   },
-  { id: 8, name: "Aditya Rao",      grade: 11, attendance: 83, gpa: 7.2, riskScore: 31, status: "low"    },
-  { id: 9, name: "Divya Reddy",     grade: 9,  attendance: 71, gpa: 6.3, riskScore: 49, status: "medium" },
-  { id: 10, name: "Karan Gupta",    grade: 10, attendance: 58, gpa: 5.0, riskScore: 74, status: "high"   },
-  { id: 11, name: "Pooja Joshi",    grade: 8,  attendance: 95, gpa: 9.1, riskScore: 8,  status: "low"    },
-  { id: 12, name: "Suresh Verma",   grade: 11, attendance: 66, gpa: 5.5, riskScore: 58, status: "medium" },
+  { id: 1,  name: "Priya Sharma",  grade: 9,  attendance: 62, gpa: 5.2, riskScore: 78, status: "high"   },
+  { id: 2,  name: "Arjun Mehta",   grade: 10, attendance: 88, gpa: 7.8, riskScore: 22, status: "low"    },
+  { id: 3,  name: "Sneha Patel",   grade: 8,  attendance: 74, gpa: 6.1, riskScore: 55, status: "medium" },
+  { id: 4,  name: "Rohit Kumar",   grade: 11, attendance: 55, gpa: 4.8, riskScore: 83, status: "high"   },
+  { id: 5,  name: "Anjali Singh",  grade: 9,  attendance: 91, gpa: 8.4, riskScore: 15, status: "low"    },
+  { id: 6,  name: "Vikram Nair",   grade: 10, attendance: 69, gpa: 5.9, riskScore: 61, status: "medium" },
+  { id: 7,  name: "Meena Iyer",    grade: 8,  attendance: 48, gpa: 4.2, riskScore: 91, status: "high"   },
+  { id: 8,  name: "Aditya Rao",    grade: 11, attendance: 83, gpa: 7.2, riskScore: 31, status: "low"    },
+  { id: 9,  name: "Divya Reddy",   grade: 9,  attendance: 71, gpa: 6.3, riskScore: 49, status: "medium" },
+  { id: 10, name: "Karan Gupta",   grade: 10, attendance: 58, gpa: 5.0, riskScore: 74, status: "high"   },
+  { id: 11, name: "Pooja Joshi",   grade: 8,  attendance: 95, gpa: 9.1, riskScore: 8,  status: "low"    },
+  { id: 12, name: "Suresh Verma",  grade: 11, attendance: 66, gpa: 5.5, riskScore: 58, status: "medium" },
 ];
 
 // ── Build one student card ──
-function buildStudentCard(student: typeof students[0]): string {
+function buildStudentCard(student) {
   return `
     <div class="student-card ${student.status}" data-id="${student.id}">
       <div class="card-header">
@@ -25,9 +25,9 @@ function buildStudentCard(student: typeof students[0]): string {
         <span class="risk-badge ${student.status}">${student.status} risk</span>
       </div>
       <div class="card-details">
-        <span><span>Grade</span>        <strong>${student.grade}</strong></span>
-        <span><span>Attendance</span>   <strong>${student.attendance}%</strong></span>
-        <span><span>GPA</span>          <strong>${student.gpa}/10</strong></span>
+        <span><span>Grade</span>      <strong>${student.grade}</strong></span>
+        <span><span>Attendance</span> <strong>${student.attendance}%</strong></span>
+        <span><span>GPA</span>        <strong>${student.gpa}/10</strong></span>
       </div>
       <div class="risk-bar-wrap">
         <div class="risk-bar-label">
@@ -42,7 +42,7 @@ function buildStudentCard(student: typeof students[0]): string {
 }
 
 // ── Dashboard page ──
-function renderDashboard(): void {
+function renderDashboard() {
   const high   = students.filter(s => s.status === 'high').length;
   const medium = students.filter(s => s.status === 'medium').length;
   const low    = students.filter(s => s.status === 'low').length;
@@ -87,11 +87,10 @@ function renderDashboard(): void {
     </section>
   `;
 
-  // Filter logic
-  document.getElementById('riskFilter')!.addEventListener('change', (e) => {
-    const val = (e.target as HTMLSelectElement).value;
+  document.getElementById('riskFilter').addEventListener('change', (e) => {
+    const val = e.target.value;
     const filtered = val === 'all' ? students : students.filter(s => s.status === val);
-    const grid = document.getElementById('studentGrid')!;
+    const grid = document.getElementById('studentGrid');
     grid.innerHTML = filtered.length
       ? filtered.map(buildStudentCard).join('')
       : '<p class="empty-state">No students match this filter.</p>';
@@ -99,7 +98,7 @@ function renderDashboard(): void {
 }
 
 // ── Students page ──
-function renderStudents(): void {
+function renderStudents() {
   app.innerHTML = `
     <section class="page">
       <h1 class="page-title">🎓 Students</h1>
@@ -112,7 +111,7 @@ function renderStudents(): void {
 }
 
 // ── Interventions page ──
-function renderInterventions(): void {
+function renderInterventions() {
   app.innerHTML = `
     <section class="page">
       <h1 class="page-title">🤝 Interventions</h1>
@@ -146,36 +145,36 @@ function renderInterventions(): void {
     </section>
   `;
 
-  document.getElementById('submitIntervention')!.addEventListener('click', () => {
-    const student = (document.getElementById('studentSelect') as HTMLSelectElement).value;
-    const type    = (document.getElementById('interventionType') as HTMLSelectElement).value;
-    const note    = (document.getElementById('interventionNote') as HTMLTextAreaElement).value;
-    const msg     = document.getElementById('formMessage')!;
+  document.getElementById('submitIntervention').addEventListener('click', () => {
+    const student = document.getElementById('studentSelect').value;
+    const type    = document.getElementById('interventionType').value;
+    const note    = document.getElementById('interventionNote').value;
+    const msg     = document.getElementById('formMessage');
 
     if (!student || !type || !note.trim()) {
       msg.innerHTML = '<div class="form-message error">⚠️ Please fill in all fields.</div>';
       return;
     }
     msg.innerHTML = '<div class="form-message success">✅ Intervention saved successfully!</div>';
-    (document.getElementById('studentSelect') as HTMLSelectElement).value = '';
-    (document.getElementById('interventionType') as HTMLSelectElement).value = '';
-    (document.getElementById('interventionNote') as HTMLTextAreaElement).value = '';
+    document.getElementById('studentSelect').value = '';
+    document.getElementById('interventionType').value = '';
+    document.getElementById('interventionNote').value = '';
   });
 }
 
 // ── Router ──
-function setActiveNav(): void {
+function setActiveNav() {
   const hash = window.location.hash || '#/dashboard';
   document.querySelectorAll('.nav-link').forEach(link => {
     link.classList.toggle('active', link.getAttribute('href') === hash);
   });
 }
 
-function renderPage(): void {
+function renderPage() {
   const hash = window.location.hash || '#/dashboard';
   setActiveNav();
-  if (hash === '#/dashboard')      renderDashboard();
-  else if (hash === '#/students')  renderStudents();
+  if (hash === '#/dashboard')          renderDashboard();
+  else if (hash === '#/students')      renderStudents();
   else if (hash === '#/interventions') renderInterventions();
   else app.innerHTML = `<section class="page"><h1>404 — Page not found</h1></section>`;
 }
