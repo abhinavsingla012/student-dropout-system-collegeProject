@@ -4,45 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "start-server": "node server/index.js",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "dev": "npm run dev --prefix frontend",
+    "start-server": "npm run start --prefix backend",
+    "seed-db": "npm run seed --prefix backend",
+    "build": "npm run build --prefix frontend",
+    "preview": "npm run preview --prefix frontend"
   },
   "devDependencies": {
     "typescript": "~6.0.2",
     "vite": "^8.0.4"
-  },
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
-  "dependencies": {
-    "chart.js": "^4.5.1",
-    "cors": "^2.8.6",
-    "detect-libc": "^2.1.2",
-    "express": "^5.2.1",
-    "fdir": "^6.5.0",
-    "lightningcss": "^1.32.0",
-    "lightningcss-win32-x64-msvc": "^1.32.0",
-    "nanoid": "^3.3.11",
-    "picocolors": "^1.1.1",
-    "picomatch": "^4.0.4",
-    "postcss": "^8.5.9",
-    "rolldown": "^1.0.0-rc.15",
-    "source-map-js": "^1.2.1",
-    "tinyglobby": "^0.2.16"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/abhinavsingla012/student-dropout-system-collegeProject.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/abhinavsingla012/student-dropout-system-collegeProject/issues"
-  },
-  "homepage": "https://github.com/abhinavsingla012/student-dropout-system-collegeProject#readme"
+  }
 }
