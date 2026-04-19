@@ -1,6 +1,151 @@
 import Chart from 'chart.js/auto';
-import { getAllStudents, countByStatus } from '../services/studentService.js';
+import {
+  areaPressureIndex,
+  buildCohortNarrative,
+  computeKPIs,
+  interventionPriorities,
+  riskDrivers,
+} from '../utils/analyticsEngine.js';
+import { getAllStudents } from '../services/studentService.js';
 import { getAllInterventions } from '../services/interventionService.js';
+
+const TYPE_LABEL = {
+  counselling: 'Counselling',
+  parent_meeting: 'Parent Meeting',
+  academic_support: 'Academic Support',
+  financial_aid: 'Financial Aid',
+  mentorship: 'Mentorship',
+};
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, character => {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return map[character];
+  });
+}
+
+function cap(value) {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+}
+
+function getTheme() {
+  const styles = getComputedStyle(document.body);
+  return {
+    textPrimary: styles.getPropertyValue('--text-primary').trim() || '#ffffff',
+    textSecondary: styles.getPropertyValue('--text-secondary').trim() || '#a1a1a1',
+    textMuted: styles.getPropertyValue('--text-muted').trim() || '#717171',
+    cardBorder: styles.getPropertyValue('--card-border').trim() || 'rgba(255,255,255,0.08)',
+    appBg: styles.getPropertyValue('--app-bg').trim() || '#030303',
+    accentPurple: styles.getPropertyValue('--accent-purple').trim() || '#818cf8',
+    accentRed: styles.getPropertyValue('--accent-red').trim() || '#fb7185',
+    accentAmber: styles.getPropertyValue('--accent-amber').trim() || '#fbbf24',
+    accentGreen: styles.getPropertyValue('--accent-green').trim() || '#34d399',
+    accentBlue: styles.getPropertyValue('--accent-blue').trim() || '#38bdf8',
+  };
+}
+
+function tooltipConfig(theme) {
+  return {
+    backgroundColor: theme.appBg,
+    borderColor: theme.cardBorder,
+    borderWidth: 1,
+    titleColor: theme.textPrimary,
+    bodyColor: theme.textSecondary,
+    titleFont: { family: 'Inter', weight: '700', size: 13 },
+    bodyFont: { family: 'Inter', size: 12 },
+    padding: 12,
+    cornerRadius: 10,
+    displayColors: false,
+  };
+}
+
+function scaleConfig(theme) {
+  return {
+    grid: { color: theme.cardBorder },
+    ticks: {
+      color: theme.textMuted,
+      font: { family: 'Inter', size: 10 },
+    },
+  };
+}
+
+function renderPressureChart(pressure) {
+  const canvas = document.getElementById('dashboardPressureChart');
+  if (!canvas) return;
+  const theme = getTheme();
+  const scales = scaleConfig(theme);
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: pressure.map(item => cap(item.area)),
+      datasets: [
+        {
+          label: 'Pressure index',
+          data: pressure.map(item => item.pressureScore),
+          backgroundColor: [theme.accentRed, theme.accentAmber, theme.accentBlue],
+          borderRadius: 12,
+          borderSkipped: false,
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        tooltip: tooltipConfig(theme),
+      },
+      scales: {
+        x: scales,
+        y: { ...scales, beginAtZero: true, max: 100 },
+      },
+    },
+  });
+}
+
+function renderDriverChart(drivers) {
+  const canvas = document.getElementById('dashboardDriverChart');
+  if (!canvas) return;
+  const theme = getTheme();
+  const scales = scaleConfig(theme);
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: drivers.map(driver => driver.label),
+      datasets: [
+        {
+          label: 'Affected share',
+          data: drivers.map(driver => driver.share),
+          backgroundColor: [theme.accentPurple, theme.accentBlue, theme.accentAmber, theme.accentGreen],
+          borderRadius: 10,
+          borderSkipped: false,
+        },
+      ],
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: tooltipConfig(theme),
+      },
+      scales: {
+        x: {
+          ...scales,
+          beginAtZero: true,
+          max: 100,
+          ticks: { ...scales.ticks, callback: value => `${value}%` },
+        },
+        y: scales,
+      },
+    },
+  });
+}
 
 export async function renderDashboard() {
   const app = document.getElementById('app');
@@ -8,199 +153,229 @@ export async function renderDashboard() {
     <section class="page">
       <div class="loading-state">
         <div class="spinner"></div>
-        <p>Initializing Command Center...</p>
+        <p>Preparing dashboard briefing...</p>
       </div>
     </section>
   `;
 
   try {
-    const [students, statusCounts, interventions] = await Promise.all([
+    const [students, interventions] = await Promise.all([
       getAllStudents(),
-      countByStatus(),
-      getAllInterventions()
+      getAllInterventions(),
     ]);
 
-    const total = students.length;
-    const avgAtt = Math.round(students.reduce((acc, s) => acc + s.attendance, 0) / total);
-    const critical = [...students].sort((a, b) => b.riskScore - a.riskScore).slice(0, 4);
-    const recent = interventions.slice(0, 3);
-    const typeLabel = { counselling:'Counselling', parent_meeting:'Meeting', academic_support:'Support', financial_aid:'Financial', mentorship:'Mentorship' };
+    const kpis = computeKPIs(students);
+    const narrative = buildCohortNarrative(students);
+    const priorities = interventionPriorities(students);
+    const pressure = areaPressureIndex(students).slice(0, 3);
+    const drivers = riskDrivers(students).slice(0, 4);
+    const urgentStudents = [...students]
+      .sort((a, b) => b.riskScore - a.riskScore || a.attendance - b.attendance)
+      .slice(0, 4);
+    const recentInterventions = interventions.slice(0, 5);
+    const primaryCluster = priorities[0];
+    const followupCluster = priorities[1];
 
     app.innerHTML = `
-      <section class="page">
-        <header class="page-header">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div>
-              <h1 class="page-title">Command Center</h1>
-              <p class="page-subtitle">Predictive analytics and student risk monitoring system.</p>
-            </div>
-            <div class="status-pill">
-              <span class="dot-pulse"></span>
-              Live System Status
-            </div>
+      <section class="page dashboard-page">
+        <header class="page-header dashboard-header-unique">
+          <div>
+            <p class="dashboard-overline">Daily Briefing</p>
+            <h1 class="page-title">Retention Operations Dashboard</h1>
+            <p class="page-subtitle">A fast decision layer for school staff: what needs attention now, where to focus next, and which interventions are already moving.</p>
+          </div>
+          <div class="status-pill">
+            <span class="dot-pulse"></span>
+            Monitoring Live
           </div>
         </header>
 
-        <div class="bento-grid">
-          
-          <!-- Row 1: KPI Summary -->
-          <div class="bento-item kpi-widget span-3">
-            <div class="kpi-head">
-              <div class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
-              <span class="kpi-label">Total Enrolled</span>
+        <section class="dashboard-briefing-band">
+          <div class="dashboard-briefing-main">
+            <span class="dashboard-briefing-label">Today’s Brief</span>
+            <h2>${escapeHtml(narrative.headline)}</h2>
+            <p>${escapeHtml(narrative.detail)}</p>
+          </div>
+          <div class="dashboard-briefing-side">
+            <div class="dashboard-brief-stat">
+              <span>Immediate watchlist</span>
+              <strong>${kpis.high}</strong>
             </div>
-            <h2 class="kpi-value">${total}</h2>
-            <div class="kpi-foot">
-              <span class="kpi-trend up">+2.4%</span>
-              <span class="widget-desc">from last month</span>
+            <div class="dashboard-brief-stat">
+              <span>Average attendance</span>
+              <strong>${kpis.avgAtt}%</strong>
             </div>
           </div>
+        </section>
 
-          <div class="bento-item kpi-widget span-3">
-            <div class="kpi-head">
-              <div class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div>
-              <span class="kpi-label">High Risk Level</span>
-            </div>
-            <h2 class="kpi-value" style="color:var(--accent-red)">${statusCounts.high}</h2>
-            <div class="kpi-foot">
-              <span class="kpi-trend down">${Math.round(statusCounts.high / total * 100)}%</span>
-              <span class="widget-desc">of total cohort</span>
-            </div>
-          </div>
+        <section class="dashboard-metric-ribbon">
+          <article class="dashboard-ribbon-card">
+            <span class="dashboard-ribbon-label">Students</span>
+            <strong class="dashboard-ribbon-value">${kpis.total}</strong>
+            <p class="dashboard-ribbon-note">Total monitored in the system</p>
+          </article>
+          <article class="dashboard-ribbon-card">
+            <span class="dashboard-ribbon-label">High Risk</span>
+            <strong class="dashboard-ribbon-value danger">${kpis.high}</strong>
+            <p class="dashboard-ribbon-note">${kpis.highRate}% of the cohort</p>
+          </article>
+          <article class="dashboard-ribbon-card">
+            <span class="dashboard-ribbon-label">Average Risk</span>
+            <strong class="dashboard-ribbon-value warning">${kpis.avgRisk}</strong>
+            <p class="dashboard-ribbon-note">Composite risk score</p>
+          </article>
+          <article class="dashboard-ribbon-card">
+            <span class="dashboard-ribbon-label">Interventions</span>
+            <strong class="dashboard-ribbon-value accent">${interventions.length}</strong>
+            <p class="dashboard-ribbon-note">Logged support actions</p>
+          </article>
+        </section>
 
-          <div class="bento-item kpi-widget span-3">
-            <div class="kpi-head">
-              <div class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-              <span class="kpi-label">Interventions</span>
-            </div>
-            <h2 class="kpi-value" style="color:var(--accent-purple)">${interventions.length}</h2>
-            <div class="kpi-foot">
-              <span class="kpi-trend up">Active</span>
-              <span class="widget-desc">logged actions</span>
-            </div>
-          </div>
-
-          <div class="bento-item kpi-widget span-3">
-            <div class="kpi-head">
-              <div class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-              <span class="kpi-label">Avg Attendance</span>
-            </div>
-            <h2 class="kpi-value" style="color:var(--accent-green)">${avgAtt}%</h2>
-            <div class="kpi-foot">
-              <span class="kpi-trend up">Stable</span>
-              <span class="widget-desc">across all grades</span>
-            </div>
-          </div>
-
-          <!-- Row 2: Analytics & Alerts -->
-          <div class="bento-item chart-widget span-8">
-            <div class="widget-head">
-              <h3 class="widget-title">Risk Distribution</h3>
-              <p class="widget-desc">Real-time breakdown of cohort risk categorization.</p>
-            </div>
-            <div class="chart-layout">
-              <div class="chart-wrap">
-                <canvas id="riskDoughnut"></canvas>
-                <div class="chart-center">
-                  <span class="center-val">${total}</span>
-                  <span class="center-lbl">Total</span>
-                </div>
+        <section class="dashboard-story-grid">
+          <article class="dashboard-panel dashboard-panel-priority">
+            <div class="dashboard-panel-head">
+              <div>
+                <span class="dashboard-panel-kicker">Primary Focus Zone</span>
+                <h3 class="dashboard-panel-title">${escapeHtml(primaryCluster?.title || 'No hotspot cluster')}</h3>
               </div>
-              <div class="chart-legend">
-                <div class="legend-row">
-                  <span class="legend-dot" style="background:var(--accent-red)"></span>
-                  <span class="legend-lbl">High Risk</span>
-                  <span class="legend-val">${statusCounts.high}</span>
-                </div>
-                <div class="legend-row">
-                  <span class="legend-dot" style="background:var(--accent-amber)"></span>
-                  <span class="legend-lbl">Medium</span>
-                  <span class="legend-val">${statusCounts.medium}</span>
-                </div>
-                <div class="legend-row">
-                  <span class="legend-dot" style="background:var(--accent-green)"></span>
-                  <span class="legend-lbl">Low Risk</span>
-                  <span class="legend-val">${statusCounts.low}</span>
-                </div>
+              <span class="dashboard-priority-badge">${primaryCluster?.pressureScore ?? 0}</span>
+            </div>
+            <div class="dashboard-priority-meta">
+              <span>${primaryCluster?.highRate ?? 0}% high-risk concentration</span>
+              <span>${escapeHtml(primaryCluster?.driver || 'No dominant driver')}</span>
+            </div>
+            <p class="dashboard-priority-copy">${escapeHtml(primaryCluster?.recommendedAction || 'Continue observing the current cohort.')}</p>
+            <div class="dashboard-followup-row">
+              <div class="dashboard-followup-card">
+                <span class="dashboard-followup-label">Secondary cluster</span>
+                <strong>${escapeHtml(followupCluster?.title || 'No secondary cluster')}</strong>
+              </div>
+              <div class="dashboard-followup-card">
+                <span class="dashboard-followup-label">System note</span>
+                <strong>${escapeHtml(narrative.support)}</strong>
               </div>
             </div>
-          </div>
+          </article>
 
-          <div class="bento-item alert-widget span-4">
-            <div class="widget-head">
-              <h3 class="widget-title" style="color:var(--accent-red)">⚡ Critical Alerts</h3>
-              <p class="widget-desc">Students requiring immediate attention.</p>
+          <article class="dashboard-panel dashboard-panel-queue">
+            <div class="dashboard-panel-head">
+              <div>
+                <span class="dashboard-panel-kicker">Urgent Watchlist</span>
+                <h3 class="dashboard-panel-title">Students needing attention</h3>
+              </div>
             </div>
-            <div class="alert-scroll">
-              ${critical.map(s => `
-                <div class="alert-card" onclick="window.location.hash='#/student/${s.id}'">
-                  <div>
-                    <span class="alert-name">${s.name}</span>
-                    <span class="alert-meta">Grade ${s.grade} · ${s.area}</span>
-                  </div>
-                  <div class="risk-pill">${s.riskScore}</div>
-                </div>
-              `).join('')}
+            <div class="dashboard-watchlist">
+              ${urgentStudents
+                .map(
+                  student => `
+                    <button class="dashboard-watch-item" onclick="window.location.hash='#/student/${student.id}'">
+                      <div>
+                        <span class="dashboard-watch-name">${escapeHtml(student.name)}</span>
+                        <span class="dashboard-watch-meta">Grade ${student.grade} | ${escapeHtml(cap(student.area))} | ${student.attendance}% attendance</span>
+                      </div>
+                      <span class="dashboard-watch-score">${student.riskScore}</span>
+                    </button>
+                  `
+                )
+                .join('')}
             </div>
-          </div>
+          </article>
+        </section>
 
-          <!-- Row 3: Activity Feed -->
-          <div class="bento-item activity-widget">
-            <div class="widget-head">
-              <h3 class="widget-title">Recent Activity Feed</h3>
-              <p class="widget-desc">Latest interventions and administrative actions detected by the system.</p>
+        <section class="dashboard-analysis-grid">
+          <article class="dashboard-panel dashboard-panel-chart">
+            <div class="dashboard-panel-head">
+              <div>
+                <span class="dashboard-panel-kicker">Regional Signal</span>
+                <h3 class="dashboard-panel-title">Pressure by area</h3>
+              </div>
             </div>
-            <div class="activity-list">
-              ${recent.map(iv => `
-                <div class="activity-card">
-                  <div class="activity-head">
-                    <span class="activity-type">${typeLabel[iv.type] || iv.type}</span>
-                    <span class="activity-time">${iv.date}</span>
-                  </div>
-                  <p class="activity-body"><strong>${iv.studentName}</strong>: ${iv.note}</p>
-                </div>
-              `).join('')}
-              ${recent.length === 0 ? '<p class="widget-desc">No recent activity detected.</p>' : ''}
+            <div class="dashboard-chart-frame">
+              <canvas id="dashboardPressureChart"></canvas>
             </div>
-          </div>
+          </article>
 
-        </div>
+          <article class="dashboard-panel dashboard-panel-chart">
+            <div class="dashboard-panel-head">
+              <div>
+                <span class="dashboard-panel-kicker">Root Causes</span>
+                <h3 class="dashboard-panel-title">Top dropout drivers</h3>
+              </div>
+            </div>
+            <div class="dashboard-chart-frame">
+              <canvas id="dashboardDriverChart"></canvas>
+            </div>
+          </article>
+        </section>
+
+        <section class="dashboard-timeline-grid">
+          <article class="dashboard-panel dashboard-panel-log">
+            <div class="dashboard-panel-head">
+              <div>
+                <span class="dashboard-panel-kicker">Recent Movement</span>
+                <h3 class="dashboard-panel-title">Intervention timeline</h3>
+              </div>
+            </div>
+            <div class="dashboard-timeline-list">
+              ${recentInterventions.length
+                ? recentInterventions
+                    .map(
+                      intervention => `
+                        <article class="dashboard-timeline-item">
+                          <div class="dashboard-timeline-dot"></div>
+                          <div class="dashboard-timeline-content">
+                            <div class="dashboard-timeline-head">
+                              <strong>${escapeHtml(intervention.studentName)}</strong>
+                              <span>${escapeHtml(intervention.date)}</span>
+                            </div>
+                            <p class="dashboard-timeline-type">${escapeHtml(TYPE_LABEL[intervention.type] || intervention.type)}</p>
+                            <p class="dashboard-timeline-note">${escapeHtml(intervention.note)}</p>
+                          </div>
+                        </article>
+                      `
+                    )
+                    .join('')
+                : '<p class="widget-desc">No recent intervention records available.</p>'}
+            </div>
+          </article>
+
+          <article class="dashboard-panel dashboard-panel-summary">
+            <div class="dashboard-panel-head">
+              <div>
+                <span class="dashboard-panel-kicker">Operational Summary</span>
+                <h3 class="dashboard-panel-title">Key drivers at a glance</h3>
+              </div>
+            </div>
+            <div class="dashboard-driver-stack">
+              ${drivers
+                .map(
+                  driver => `
+                    <div class="dashboard-driver-card">
+                      <div>
+                        <strong>${escapeHtml(driver.label)}</strong>
+                        <p>${escapeHtml(driver.description)}</p>
+                      </div>
+                      <span>${driver.share}%</span>
+                    </div>
+                  `
+                )
+                .join('')}
+            </div>
+          </article>
+        </section>
       </section>
     `;
 
-    // Initialize Chart
-    const ctx = document.getElementById('riskDoughnut').getContext('2d');
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['High', 'Medium', 'Low'],
-        datasets: [{
-          data: [statusCounts.high, statusCounts.medium, statusCounts.low],
-          backgroundColor: ['#fb7185', '#fbbf24', '#34d399'],
-          borderWidth: 0,
-          hoverOffset: 12,
-          spacing: 4
-        }]
-      },
-      options: {
-        cutout: '82%',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(13, 13, 13, 0.9)',
-            titleFont: { family: 'Inter', size: 13, weight: '700' },
-            bodyFont: { family: 'Inter', size: 12 },
-            padding: 12,
-            cornerRadius: 8,
-            displayColors: false
-          }
-        }
-      }
-    });
-
-  } catch (err) {
-    app.innerHTML = `<section class="page"><div class="loading-state"><h2>Error initializing system</h2><p>${err.message}</p></div></section>`;
+    renderPressureChart(pressure);
+    renderDriverChart(drivers);
+  } catch (error) {
+    app.innerHTML = `
+      <section class="page">
+        <div class="loading-state">
+          <h2>Error initializing dashboard</h2>
+          <p>${escapeHtml(error.message)}</p>
+        </div>
+      </section>
+    `;
   }
 }
