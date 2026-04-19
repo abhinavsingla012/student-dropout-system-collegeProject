@@ -1,36 +1,95 @@
 import Chart from 'chart.js/auto';
 import { getAllStudents } from '../services/studentService.js';
 import {
-  filterData, computeKPIs, riskByArea, attendanceByArea,
-  economicCounts, topFactors, radarByArea, simulateAttendance, generateInsights
+  areaPressureIndex,
+  attendanceByArea,
+  buildCohortNarrative,
+  computeKPIs,
+  economicCounts,
+  filterData,
+  generateInsights,
+  gradeRiskDistribution,
+  interventionPriorities,
+  radarByArea,
+  riskByArea,
+  riskDrivers,
+  simulateAttendance,
+  topFactors,
 } from '../utils/analyticsEngine.js';
 
-let state = { all: [], filters: { area: 'all', economicStatus: 'all', riskLevel: 'all' }, charts: {}, drillDown: null };
+let state = {
+  all: [],
+  filters: { area: 'all', economicStatus: 'all', riskLevel: 'all' },
+  charts: {},
+  drillDown: null,
+};
 
 function getTheme() {
-  const s = getComputedStyle(document.body);
+  const styles = getComputedStyle(document.body);
   return {
-    t1: s.getPropertyValue('--t1').trim() || '#fff',
-    t2: s.getPropertyValue('--t2').trim() || '#a1a1a1',
-    t3: s.getPropertyValue('--t3').trim() || '#717171',
-    b1: s.getPropertyValue('--b1').trim() || 'rgba(255,255,255,0.08)',
-    bg: s.getPropertyValue('--bg').trim() || '#030303',
-    bgR: s.getPropertyValue('--bg-raised').trim() || '#1a1a1a',
+    textPrimary: styles.getPropertyValue('--text-primary').trim() || '#ffffff',
+    textSecondary: styles.getPropertyValue('--text-secondary').trim() || '#a1a1a1',
+    textMuted: styles.getPropertyValue('--text-muted').trim() || '#717171',
+    cardBorder: styles.getPropertyValue('--card-border').trim() || 'rgba(255,255,255,0.08)',
+    appBg: styles.getPropertyValue('--app-bg').trim() || '#030303',
+    cardBg: styles.getPropertyValue('--card-bg').trim() || 'rgba(13,13,13,0.8)',
+    accentPurple: styles.getPropertyValue('--accent-purple').trim() || '#818cf8',
+    accentRed: styles.getPropertyValue('--accent-red').trim() || '#fb7185',
+    accentAmber: styles.getPropertyValue('--accent-amber').trim() || '#fbbf24',
+    accentGreen: styles.getPropertyValue('--accent-green').trim() || '#34d399',
+    accentBlue: styles.getPropertyValue('--accent-blue').trim() || '#38bdf8',
   };
 }
 
-function tooltipConfig(c) {
-  return { backgroundColor: c.bgR, borderColor: c.b1, borderWidth: 1, titleColor: c.t1, bodyColor: c.t2, titleFont: { family: 'Plus Jakarta Sans', weight: '700', size: 13 }, bodyFont: { family: 'Inter', size: 12 }, padding: 12, cornerRadius: 8, displayColors: true, boxPadding: 4 };
+function tooltipConfig(theme) {
+  return {
+    backgroundColor: theme.appBg,
+    borderColor: theme.cardBorder,
+    borderWidth: 1,
+    titleColor: theme.textPrimary,
+    bodyColor: theme.textSecondary,
+    titleFont: { family: 'Inter', weight: '700', size: 13 },
+    bodyFont: { family: 'Inter', size: 12 },
+    padding: 12,
+    cornerRadius: 10,
+    displayColors: true,
+    boxPadding: 4,
+  };
 }
 
-function scaleConfig(c) {
-  return { grid: { color: c.b1 }, ticks: { color: c.t3, font: { family: 'Inter', size: 10 } } };
+function scaleConfig(theme) {
+  return {
+    grid: { color: theme.cardBorder },
+    ticks: {
+      color: theme.textMuted,
+      font: { family: 'Inter', size: 10 },
+    },
+  };
 }
 
-function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function cap(value) {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, character => {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return map[character];
+  });
+}
 
 function destroyCharts() {
-  Object.values(state.charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  Object.values(state.charts).forEach(chart => {
+    try {
+      chart.destroy();
+    } catch {}
+  });
   state.charts = {};
 }
 
@@ -38,219 +97,214 @@ function getFiltered() {
   let data = filterData(state.all, state.filters);
   if (state.drillDown) {
     const { type, value } = state.drillDown;
-    data = data.filter(s => s[type] === value);
+    data = data.filter(student => student[type] === value);
   }
   return data;
 }
 
-// ── Animated counter ──
-function animateValue(el, end) {
-  const start = parseInt(el.textContent) || 0;
-  const dur = 600;
-  const t0 = performance.now();
-  const suffix = el.dataset.suffix || '';
+function animateValue(element, endValue) {
+  const startValue = parseInt(element.textContent, 10) || 0;
+  const duration = 600;
+  const startedAt = performance.now();
+  const suffix = element.dataset.suffix || '';
+
   function tick(now) {
-    const p = Math.min((now - t0) / dur, 1);
-    const ease = 1 - Math.pow(1 - p, 3);
-    el.textContent = Math.round(start + (end - start) * ease) + suffix;
-    if (p < 1) requestAnimationFrame(tick);
+    const progress = Math.min((now - startedAt) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    element.textContent = `${Math.round(startValue + (endValue - startValue) * eased)}${suffix}`;
+    if (progress < 1) requestAnimationFrame(tick);
   }
+
   requestAnimationFrame(tick);
 }
 
 function updateKPIs(data) {
-  const k = computeKPIs(data);
-  const map = { kpiTotal: k.total, kpiHigh: k.high, kpiAtt: k.avgAtt, kpiRate: k.highRate };
-  Object.entries(map).forEach(([id, val]) => {
-    const el = document.getElementById(id);
-    if (el) animateValue(el, val);
+  const kpis = computeKPIs(data);
+  const pressure = areaPressureIndex(data)[0];
+  const drivers = riskDrivers(data);
+
+  const values = {
+    kpiTotal: kpis.total,
+    kpiHigh: kpis.high,
+    kpiRisk: kpis.avgRisk,
+    kpiAtt: kpis.avgAtt,
+  };
+
+  Object.entries(values).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+    if (element) animateValue(element, value);
   });
+
+  const hotspotLabel = document.getElementById('kpiHotspot');
+  if (hotspotLabel) {
+    hotspotLabel.textContent = pressure ? cap(pressure.area) : 'None';
+  }
+
+  const driverLabel = document.getElementById('kpiDriver');
+  if (driverLabel) {
+    driverLabel.textContent = drivers[0] ? drivers[0].label : 'No dominant driver';
+  }
 }
 
-// ── Build / Update Charts ──
-function updateAllCharts() {
-  const data = getFiltered();
-  updateKPIs(data);
-  updateRiskChart(data);
-  updateAreaChart(data);
-  updateEcoChart(data);
-  updateAttChart(data);
-  updateRadarChart(data);
-  updateFactorBars(data);
-  updateSimulator();
-  updateInsights(data);
-  updateDrillBanner();
+function updateNarrative(data) {
+  const narrative = buildCohortNarrative(data);
+  const root = document.getElementById('analyticsNarrative');
+  if (!root) return;
+
+  root.innerHTML = `
+    <div class="narrative-kicker">Dropout Intelligence</div>
+    <h2 class="narrative-title">${escapeHtml(narrative.headline)}</h2>
+    <p class="narrative-copy">${escapeHtml(narrative.detail)}</p>
+    <p class="narrative-support">${escapeHtml(narrative.support)}</p>
+  `;
 }
 
-function updateRiskChart(data) {
-  const k = computeKPIs(data);
-  const c = getTheme();
-  if (state.charts.risk) {
-    state.charts.risk.data.datasets[0].data = [k.high, k.medium, k.low];
-    state.charts.risk.update('active');
+function updatePriorityList(data) {
+  const priorities = interventionPriorities(data);
+  const root = document.getElementById('priorityList');
+  if (!root) return;
+
+  if (!priorities.length) {
+    root.innerHTML = '<p class="widget-desc">No intervention priorities available for the current filters.</p>';
     return;
   }
-  state.charts.risk = new Chart(document.getElementById('chRisk'), {
-    type: 'doughnut',
-    data: { labels: ['High', 'Medium', 'Low'], datasets: [{ data: [k.high, k.medium, k.low], backgroundColor: ['#ff5c72', '#f5a623', '#0dca73'], borderColor: c.bg, borderWidth: 3, hoverOffset: 8 }] },
-    options: {
-      cutout: '72%', animation: { animateRotate: true, duration: 800 },
-      plugins: { legend: { position: 'bottom', labels: { color: c.t2, font: { family: 'Inter', size: 11 }, padding: 14 } }, tooltip: tooltipConfig(c) },
-      onClick: (_, els) => { if (els.length) { const lvl = ['high', 'medium', 'low'][els[0].index]; setDrillDown('status', lvl); } }
-    }
-  });
+
+  root.innerHTML = priorities
+    .map(
+      priority => `
+        <article class="priority-card">
+          <div class="priority-head">
+            <div>
+              <h4 class="priority-title">${escapeHtml(priority.title)}</h4>
+              <p class="priority-meta">${priority.highRate}% high risk | Avg risk ${priority.avgRisk}</p>
+            </div>
+            <span class="priority-score">${priority.pressureScore}</span>
+          </div>
+          <p class="priority-driver">Primary driver: <strong>${escapeHtml(priority.driver)}</strong></p>
+          <p class="priority-action">${escapeHtml(priority.recommendedAction)}</p>
+        </article>
+      `
+    )
+    .join('');
 }
 
-function updateAreaChart(data) {
-  const areas = riskByArea(data);
-  const labels = Object.keys(areas).map(cap);
-  const c = getTheme();
-  if (state.charts.area) {
-    state.charts.area.data.labels = labels;
-    state.charts.area.data.datasets[0].data = Object.values(areas).map(v => v.high);
-    state.charts.area.data.datasets[1].data = Object.values(areas).map(v => v.medium);
-    state.charts.area.data.datasets[2].data = Object.values(areas).map(v => v.low);
-    state.charts.area.update('active');
-    return;
-  }
-  const SX = scaleConfig(c);
-  state.charts.area = new Chart(document.getElementById('chArea'), {
-    type: 'bar',
-    data: { labels, datasets: [
-      { label: 'High', data: Object.values(areas).map(v => v.high), backgroundColor: '#ff5c72', borderRadius: 4, borderSkipped: false },
-      { label: 'Medium', data: Object.values(areas).map(v => v.medium), backgroundColor: '#f5a623', borderRadius: 4, borderSkipped: false },
-      { label: 'Low', data: Object.values(areas).map(v => v.low), backgroundColor: '#0dca73', borderRadius: 4, borderSkipped: false },
-    ]},
-    options: {
-      animation: { duration: 800 }, scales: { x: { ...SX, stacked: true }, y: { ...SX, stacked: true, beginAtZero: true } },
-      plugins: { legend: { labels: { color: c.t2, font: { family: 'Inter', size: 11 }, padding: 14 } }, tooltip: tooltipConfig(c) },
-      onClick: (_, els) => { if (els.length) { const area = Object.keys(areas)[els[0].index]; setDrillDown('area', area); } }
-    }
-  });
-}
+function updateDriverTable(data) {
+  const drivers = riskDrivers(data);
+  const root = document.getElementById('driverTable');
+  if (!root) return;
 
-function updateEcoChart(data) {
-  const eco = economicCounts(data);
-  const c = getTheme();
-  if (state.charts.eco) {
-    state.charts.eco.data.datasets[0].data = [eco.low, eco.mid, eco.high];
-    state.charts.eco.update('active');
-    return;
-  }
-  state.charts.eco = new Chart(document.getElementById('chEco'), {
-    type: 'pie',
-    data: { labels: ['Low Income', 'Mid Income', 'High Income'], datasets: [{ data: [eco.low, eco.mid, eco.high], backgroundColor: ['#ff5c72', '#f5a623', '#0dca73'], borderColor: c.bg, borderWidth: 3, hoverOffset: 8 }] },
-    options: {
-      animation: { duration: 800 },
-      plugins: { legend: { position: 'bottom', labels: { color: c.t2, font: { family: 'Inter', size: 11 }, padding: 14 } }, tooltip: tooltipConfig(c) },
-      onClick: (_, els) => { if (els.length) { const eco = ['low', 'mid', 'high'][els[0].index]; setDrillDown('economicStatus', eco); } }
-    }
-  });
-}
-
-function updateAttChart(data) {
-  const att = attendanceByArea(data);
-  const labels = Object.keys(att).map(cap);
-  const c = getTheme();
-  const SX = scaleConfig(c);
-  if (state.charts.att) {
-    state.charts.att.data.labels = labels;
-    state.charts.att.data.datasets[0].data = Object.values(att);
-    state.charts.att.update('active');
-    return;
-  }
-  state.charts.att = new Chart(document.getElementById('chAtt'), {
-    type: 'bar',
-    data: { labels, datasets: [{ label: 'Avg Attendance %', data: Object.values(att), backgroundColor: ['#818cf8', '#0dca73', '#f5a623'], borderRadius: 6, borderSkipped: false }] },
-    options: {
-      animation: { duration: 800 },
-      plugins: { legend: { display: false }, tooltip: tooltipConfig(c) },
-      scales: { x: SX, y: { ...SX, min: 40, max: 100, ticks: { ...SX.ticks, callback: v => v + '%' } } }
-    }
-  });
-}
-
-function updateRadarChart(data) {
-  const radar = radarByArea(data);
-  const areaKeys = Object.keys(radar);
-  const c = getTheme();
-  const colors = { rural: '#ff5c72', urban: '#818cf8', 'semi-urban': '#0dca73' };
-  const labels = ['Attendance', 'GPA (×10)', 'Distance (km)', 'Failures (×20)', 'Economic Risk (×30)'];
-  const datasets = areaKeys.map(area => {
-    const d = radar[area];
-    return {
-      label: cap(area), data: [d.attendance, d.gpa * 10, d.distance, d.failures * 20, d.economicRisk * 30],
-      backgroundColor: (colors[area] || '#818cf8') + '22', borderColor: colors[area] || '#818cf8', borderWidth: 2, pointBackgroundColor: colors[area] || '#818cf8', pointRadius: 4,
-    };
-  });
-  if (state.charts.radar) {
-    state.charts.radar.data.datasets = datasets;
-    state.charts.radar.update('active');
-    return;
-  }
-  state.charts.radar = new Chart(document.getElementById('chRadar'), {
-    type: 'radar',
-    data: { labels, datasets },
-    options: {
-      animation: { duration: 800 },
-      scales: { r: { angleLines: { color: c.b1 }, grid: { color: c.b1 }, pointLabels: { color: c.t2, font: { family: 'Inter', size: 10 } }, ticks: { display: false } } },
-      plugins: { legend: { labels: { color: c.t2, font: { family: 'Inter', size: 11 }, padding: 14 } }, tooltip: tooltipConfig(c) }
-    }
-  });
+  root.innerHTML = drivers
+    .map(
+      driver => `
+        <div class="driver-row">
+          <div>
+            <div class="driver-label">${escapeHtml(driver.label)}</div>
+            <div class="driver-desc">${escapeHtml(driver.description)}</div>
+          </div>
+          <div class="driver-metric">
+            <strong>${driver.share}%</strong>
+            <span>${driver.count} students</span>
+          </div>
+        </div>
+      `
+    )
+    .join('');
 }
 
 function updateFactorBars(data) {
   const factors = topFactors(data);
   const max = factors[0]?.[1] || 1;
   const total = data.length;
-  const el = document.getElementById('factorBarsContainer');
-  if (!el) return;
-  el.innerHTML = factors.map(([l, count], i) =>
-    `<div class="factor-row"><span class="factor-label">${l}</span><div class="factor-bar-bg"><div class="factor-bar-fill" style="width:${(count / max) * 100}%;opacity:${1 - i * 0.07}"></div></div><span class="factor-count">${count}/${total}</span></div>`
-  ).join('');
+  const root = document.getElementById('factorBarsContainer');
+  if (!root) return;
+
+  root.innerHTML = factors.length
+    ? factors
+        .map(
+          ([label, count], index) => `
+            <div class="factor-row">
+              <span class="factor-label">${escapeHtml(label)}</span>
+              <div class="factor-bar-bg">
+                <div class="factor-bar-fill" style="width:${(count / max) * 100}%;opacity:${1 - index * 0.07}"></div>
+              </div>
+              <span class="factor-count">${count}/${total}</span>
+            </div>
+          `
+        )
+        .join('')
+    : '<p class="widget-desc">No factor data available for the current filters.</p>';
 }
 
-// ── Simulator ──
+function updateInsights(data) {
+  const insights = generateInsights(data);
+  const root = document.getElementById('insightsContainer');
+  if (!root) return;
+
+  root.innerHTML = insights
+    .map(
+      (insight, index) => `
+        <div class="insight-card" data-insight="${index}" style="--i:${index}">
+          <span class="insight-icon">${escapeHtml(insight.icon)}</span>
+          <p class="insight-text">${escapeHtml(insight.text)}</p>
+          <span class="insight-action">Apply filter</span>
+        </div>
+      `
+    )
+    .join('');
+
+  root.querySelectorAll('.insight-card').forEach((card, index) => {
+    card.addEventListener('click', () => {
+      const insight = insights[index];
+      if (!insight?.filter) return;
+
+      Object.entries(insight.filter).forEach(([key, value]) => {
+        state.filters[key] = value;
+      });
+      syncFilterUI();
+      onFilterChange();
+    });
+  });
+}
+
 function updateSimulator() {
   const slider = document.getElementById('simSlider');
   if (!slider) return;
-  const val = parseInt(slider.value);
-  document.getElementById('simValue').textContent = `+${val}%`;
+
+  const value = parseInt(slider.value, 10);
   const data = getFiltered();
-  const { before, after } = simulateAttendance(data, val);
+  const { before, after } = simulateAttendance(data, value);
   const total = before.total || 1;
 
-  const renderBar = (id, bVal, aVal, color) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = `<div class="sim-bar-track"><div class="sim-bar-fill" style="width:${(bVal / total) * 100}%;background:${color}"></div><div class="sim-bar-ghost" style="width:${(aVal / total) * 100}%;border-color:${color}"></div></div><div class="sim-bar-labels"><span>${bVal} now</span><span class="sim-predicted">→ ${aVal} predicted</span></div>`;
+  document.getElementById('simValue').textContent = `+${value}%`;
+  const projectedShift = after.high - before.high;
+  document.getElementById('simOutcome').textContent =
+    projectedShift < 0
+      ? `${Math.abs(projectedShift)} fewer students remain in high-risk status.`
+      : projectedShift > 0
+        ? `${projectedShift} more students remain in high-risk status.`
+        : 'No change in high-risk count at the current threshold.';
+
+  const renderBar = (id, beforeValue, afterValue, color) => {
+    const root = document.getElementById(id);
+    if (!root) return;
+
+    root.innerHTML = `
+      <div class="sim-bar-track">
+        <div class="sim-bar-fill" style="width:${(beforeValue / total) * 100}%;background:${color}"></div>
+        <div class="sim-bar-ghost" style="width:${(afterValue / total) * 100}%;border-color:${color}"></div>
+      </div>
+      <div class="sim-bar-labels">
+        <span>${beforeValue} now</span>
+        <span class="sim-predicted">to ${afterValue} projected</span>
+      </div>
+    `;
   };
+
   renderBar('simHigh', before.high, after.high, '#ff5c72');
   renderBar('simMed', before.medium, after.medium, '#f5a623');
   renderBar('simLow', before.low, after.low, '#0dca73');
 }
 
-// ── Insights ──
-function updateInsights(data) {
-  const insights = generateInsights(data);
-  const el = document.getElementById('insightsContainer');
-  if (!el) return;
-  el.innerHTML = insights.map((ins, i) =>
-    `<div class="insight-card" data-insight="${i}" style="--i:${i}"><span class="insight-icon">${ins.icon}</span><p class="insight-text">${ins.text}</p><span class="insight-action">Apply filter →</span></div>`
-  ).join('');
-  el.querySelectorAll('.insight-card').forEach((card, i) => {
-    card.addEventListener('click', () => {
-      const ins = insights[i];
-      if (ins.filter) {
-        Object.entries(ins.filter).forEach(([k, v]) => { state.filters[k] = v; });
-        syncFilterUI();
-        onFilterChange();
-      }
-    });
-  });
-}
-
-// ── Drill-down ──
 function setDrillDown(type, value) {
   if (state.drillDown && state.drillDown.type === type && state.drillDown.value === value) {
     state.drillDown = null;
@@ -261,32 +315,438 @@ function setDrillDown(type, value) {
 }
 
 function updateDrillBanner() {
-  const el = document.getElementById('drillBanner');
-  if (!el) return;
+  const root = document.getElementById('drillBanner');
+  if (!root) return;
+
   if (state.drillDown) {
-    el.innerHTML = `<span>🔍 Viewing: <strong>${cap(state.drillDown.value)}</strong> ${state.drillDown.type}</span><button id="drillExit" class="drill-exit">✕ Reset</button>`;
-    el.classList.add('active');
-    document.getElementById('drillExit')?.addEventListener('click', () => { state.drillDown = null; updateAllCharts(); });
+    root.innerHTML = `
+      <span>Viewing ${escapeHtml(cap(state.drillDown.value))} ${escapeHtml(state.drillDown.type)} in focus mode</span>
+      <button id="drillExit" class="drill-exit">Reset</button>
+    `;
+    root.classList.add('active');
+    document.getElementById('drillExit')?.addEventListener('click', () => {
+      state.drillDown = null;
+      updateAllCharts();
+    });
   } else {
-    el.classList.remove('active');
-    el.innerHTML = '';
+    root.classList.remove('active');
+    root.innerHTML = '';
   }
 }
 
-// ── Filter UI ──
 function syncFilterUI() {
-  ['area', 'economicStatus', 'riskLevel'].forEach(k => {
-    const sel = document.getElementById(`filter_${k}`);
-    if (sel) sel.value = state.filters[k];
+  ['area', 'economicStatus', 'riskLevel'].forEach(key => {
+    const select = document.getElementById(`filter_${key}`);
+    if (select) select.value = state.filters[key];
   });
-  // Active filter pills
+
   const pills = document.getElementById('filterPills');
   if (!pills) return;
-  const active = Object.entries(state.filters).filter(([, v]) => v !== 'all');
-  pills.innerHTML = active.map(([k, v]) => `<span class="filter-chip">${cap(v)} <button data-key="${k}" class="chip-x">×</button></span>`).join('');
-  pills.querySelectorAll('.chip-x').forEach(btn => {
-    btn.addEventListener('click', () => { state.filters[btn.dataset.key] = 'all'; syncFilterUI(); onFilterChange(); });
+
+  const active = Object.entries(state.filters).filter(([, value]) => value !== 'all');
+  pills.innerHTML = active
+    .map(
+      ([key, value]) => `
+        <span class="filter-chip">
+          ${escapeHtml(cap(value))}
+          <button data-key="${escapeHtml(key)}" class="chip-x">x</button>
+        </span>
+      `
+    )
+    .join('');
+
+  pills.querySelectorAll('.chip-x').forEach(button => {
+    button.addEventListener('click', () => {
+      state.filters[button.dataset.key] = 'all';
+      syncFilterUI();
+      onFilterChange();
+    });
   });
+}
+
+function updateRiskChart(data) {
+  const kpis = computeKPIs(data);
+  const theme = getTheme();
+
+  if (state.charts.risk) {
+    state.charts.risk.data.datasets[0].data = [kpis.high, kpis.medium, kpis.low];
+    state.charts.risk.update('active');
+    return;
+  }
+
+  state.charts.risk = new Chart(document.getElementById('chRisk'), {
+    type: 'doughnut',
+    data: {
+      labels: ['High', 'Medium', 'Low'],
+      datasets: [
+        {
+          data: [kpis.high, kpis.medium, kpis.low],
+          backgroundColor: [theme.accentRed, theme.accentAmber, theme.accentGreen],
+          borderColor: theme.appBg,
+          borderWidth: 3,
+          hoverOffset: 8,
+        },
+      ],
+    },
+    options: {
+      cutout: '72%',
+      animation: { animateRotate: true, duration: 800 },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: theme.textSecondary, font: { family: 'Inter', size: 11 }, padding: 14 },
+        },
+        tooltip: tooltipConfig(theme),
+      },
+      onClick: (_, elements) => {
+        if (!elements.length) return;
+        const level = ['high', 'medium', 'low'][elements[0].index];
+        setDrillDown('status', level);
+      },
+    },
+  });
+}
+
+function updateAreaChart(data) {
+  const areas = riskByArea(data);
+  const labels = Object.keys(areas).map(cap);
+  const theme = getTheme();
+  const scales = scaleConfig(theme);
+
+  if (state.charts.area) {
+    state.charts.area.data.labels = labels;
+    state.charts.area.data.datasets[0].data = Object.values(areas).map(value => value.high);
+    state.charts.area.data.datasets[1].data = Object.values(areas).map(value => value.medium);
+    state.charts.area.data.datasets[2].data = Object.values(areas).map(value => value.low);
+    state.charts.area.update('active');
+    return;
+  }
+
+  state.charts.area = new Chart(document.getElementById('chArea'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'High', data: Object.values(areas).map(value => value.high), backgroundColor: theme.accentRed, borderRadius: 4, borderSkipped: false },
+        { label: 'Medium', data: Object.values(areas).map(value => value.medium), backgroundColor: theme.accentAmber, borderRadius: 4, borderSkipped: false },
+        { label: 'Low', data: Object.values(areas).map(value => value.low), backgroundColor: theme.accentGreen, borderRadius: 4, borderSkipped: false },
+      ],
+    },
+    options: {
+      animation: { duration: 800 },
+      scales: {
+        x: { ...scales, stacked: true },
+        y: { ...scales, stacked: true, beginAtZero: true },
+      },
+      plugins: {
+        legend: { labels: { color: theme.textSecondary, font: { family: 'Inter', size: 11 }, padding: 14 } },
+        tooltip: tooltipConfig(theme),
+      },
+      onClick: (_, elements) => {
+        if (!elements.length) return;
+        const area = Object.keys(areas)[elements[0].index];
+        setDrillDown('area', area);
+      },
+    },
+  });
+}
+
+function updateDriverChart(data) {
+  const drivers = riskDrivers(data);
+  const theme = getTheme();
+  const scales = scaleConfig(theme);
+
+  if (state.charts.driver) {
+    state.charts.driver.data.labels = drivers.map(driver => driver.label);
+    state.charts.driver.data.datasets[0].data = drivers.map(driver => driver.share);
+    state.charts.driver.update('active');
+    return;
+  }
+
+  state.charts.driver = new Chart(document.getElementById('chDrivers'), {
+    type: 'bar',
+    data: {
+      labels: drivers.map(driver => driver.label),
+      datasets: [
+        {
+          label: 'Affected share (%)',
+          data: drivers.map(driver => driver.share),
+          backgroundColor: [
+            theme.accentPurple,
+            theme.accentBlue,
+            theme.accentAmber,
+            theme.accentGreen,
+            theme.accentRed,
+          ],
+          borderRadius: 8,
+          borderSkipped: false,
+        },
+      ],
+    },
+    options: {
+      indexAxis: 'y',
+      animation: { duration: 800 },
+      plugins: {
+        legend: { display: false },
+        tooltip: tooltipConfig(theme),
+      },
+      scales: {
+        x: {
+          ...scales,
+          beginAtZero: true,
+          max: 100,
+          ticks: { ...scales.ticks, callback: value => `${value}%` },
+        },
+        y: scales,
+      },
+    },
+  });
+}
+
+function updateGradeChart(data) {
+  const grades = gradeRiskDistribution(data);
+  const labels = Object.keys(grades);
+  const theme = getTheme();
+  const scales = scaleConfig(theme);
+
+  if (state.charts.grade) {
+    state.charts.grade.data.labels = labels;
+    state.charts.grade.data.datasets[0].data = Object.values(grades).map(value => value.high);
+    state.charts.grade.data.datasets[1].data = Object.values(grades).map(value => value.medium);
+    state.charts.grade.data.datasets[2].data = Object.values(grades).map(value => value.low);
+    state.charts.grade.update('active');
+    return;
+  }
+
+  state.charts.grade = new Chart(document.getElementById('chGrade'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'High', data: Object.values(grades).map(value => value.high), backgroundColor: theme.accentRed, borderRadius: 4, borderSkipped: false },
+        { label: 'Medium', data: Object.values(grades).map(value => value.medium), backgroundColor: theme.accentAmber, borderRadius: 4, borderSkipped: false },
+        { label: 'Low', data: Object.values(grades).map(value => value.low), backgroundColor: theme.accentGreen, borderRadius: 4, borderSkipped: false },
+      ],
+    },
+    options: {
+      animation: { duration: 800 },
+      plugins: {
+        legend: { labels: { color: theme.textSecondary, font: { family: 'Inter', size: 11 }, padding: 14 } },
+        tooltip: tooltipConfig(theme),
+      },
+      scales: {
+        x: scales,
+        y: { ...scales, beginAtZero: true },
+      },
+    },
+  });
+}
+
+function updatePressureChart(data) {
+  const pressure = areaPressureIndex(data);
+  const theme = getTheme();
+  const scales = scaleConfig(theme);
+
+  if (state.charts.pressure) {
+    state.charts.pressure.data.labels = pressure.map(item => cap(item.area));
+    state.charts.pressure.data.datasets[0].data = pressure.map(item => item.pressureScore);
+    state.charts.pressure.update('active');
+    return;
+  }
+
+  state.charts.pressure = new Chart(document.getElementById('chPressure'), {
+    type: 'line',
+    data: {
+      labels: pressure.map(item => cap(item.area)),
+      datasets: [
+        {
+          label: 'Pressure index',
+          data: pressure.map(item => item.pressureScore),
+          borderColor: theme.accentPurple,
+          backgroundColor: `${theme.accentPurple}20`,
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: theme.accentPurple,
+          pointRadius: 4,
+        },
+      ],
+    },
+    options: {
+      animation: { duration: 800 },
+      plugins: {
+        legend: { display: false },
+        tooltip: tooltipConfig(theme),
+      },
+      scales: {
+        x: scales,
+        y: { ...scales, beginAtZero: true, max: 100 },
+      },
+    },
+  });
+}
+
+function updateRadarChart(data) {
+  const radar = radarByArea(data);
+  const theme = getTheme();
+  const colors = {
+    rural: theme.accentRed,
+    urban: theme.accentPurple,
+    'semi-urban': theme.accentGreen,
+  };
+
+  const labels = ['Attendance', 'GPA x10', 'Distance', 'Failures x20', 'Economic risk x30'];
+  const datasets = Object.keys(radar).map(area => {
+    const value = radar[area];
+    const color = colors[area] || theme.accentBlue;
+    return {
+      label: cap(area),
+      data: [
+        value.attendance,
+        value.gpa * 10,
+        value.distance,
+        value.failures * 20,
+        value.economicRisk * 30,
+      ],
+      backgroundColor: `${color}22`,
+      borderColor: color,
+      borderWidth: 2,
+      pointBackgroundColor: color,
+      pointRadius: 4,
+    };
+  });
+
+  if (state.charts.radar) {
+    state.charts.radar.data.datasets = datasets;
+    state.charts.radar.update('active');
+    return;
+  }
+
+  state.charts.radar = new Chart(document.getElementById('chRadar'), {
+    type: 'radar',
+    data: { labels, datasets },
+    options: {
+      animation: { duration: 800 },
+      scales: {
+        r: {
+          angleLines: { color: theme.cardBorder },
+          grid: { color: theme.cardBorder },
+          pointLabels: { color: theme.textSecondary, font: { family: 'Inter', size: 10 } },
+          ticks: { display: false },
+        },
+      },
+      plugins: {
+        legend: { labels: { color: theme.textSecondary, font: { family: 'Inter', size: 11 }, padding: 14 } },
+        tooltip: tooltipConfig(theme),
+      },
+    },
+  });
+}
+
+function updateEconomicChart(data) {
+  const economics = economicCounts(data);
+  const theme = getTheme();
+
+  if (state.charts.economic) {
+    state.charts.economic.data.datasets[0].data = [economics.low, economics.mid, economics.high];
+    state.charts.economic.update('active');
+    return;
+  }
+
+  state.charts.economic = new Chart(document.getElementById('chEco'), {
+    type: 'pie',
+    data: {
+      labels: ['Low income', 'Mid income', 'High income'],
+      datasets: [
+        {
+          data: [economics.low, economics.mid, economics.high],
+          backgroundColor: [theme.accentRed, theme.accentAmber, theme.accentGreen],
+          borderColor: theme.appBg,
+          borderWidth: 3,
+          hoverOffset: 8,
+        },
+      ],
+    },
+    options: {
+      animation: { duration: 800 },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: theme.textSecondary, font: { family: 'Inter', size: 11 }, padding: 14 },
+        },
+        tooltip: tooltipConfig(theme),
+      },
+      onClick: (_, elements) => {
+        if (!elements.length) return;
+        const value = ['low', 'mid', 'high'][elements[0].index];
+        setDrillDown('economicStatus', value);
+      },
+    },
+  });
+}
+
+function updateAttendanceChart(data) {
+  const attendance = attendanceByArea(data);
+  const theme = getTheme();
+  const scales = scaleConfig(theme);
+
+  if (state.charts.attendance) {
+    state.charts.attendance.data.labels = Object.keys(attendance).map(cap);
+    state.charts.attendance.data.datasets[0].data = Object.values(attendance);
+    state.charts.attendance.update('active');
+    return;
+  }
+
+  state.charts.attendance = new Chart(document.getElementById('chAtt'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(attendance).map(cap),
+      datasets: [
+        {
+          label: 'Avg attendance %',
+          data: Object.values(attendance),
+          backgroundColor: [theme.accentPurple, theme.accentGreen, theme.accentBlue],
+          borderRadius: 6,
+          borderSkipped: false,
+        },
+      ],
+    },
+    options: {
+      animation: { duration: 800 },
+      plugins: {
+        legend: { display: false },
+        tooltip: tooltipConfig(theme),
+      },
+      scales: {
+        x: scales,
+        y: {
+          ...scales,
+          min: 40,
+          max: 100,
+          ticks: { ...scales.ticks, callback: value => `${value}%` },
+        },
+      },
+    },
+  });
+}
+
+function updateAllCharts() {
+  const data = getFiltered();
+  updateKPIs(data);
+  updateNarrative(data);
+  updatePriorityList(data);
+  updateDriverTable(data);
+  updateRiskChart(data);
+  updateAreaChart(data);
+  updateDriverChart(data);
+  updateGradeChart(data);
+  updatePressureChart(data);
+  updateRadarChart(data);
+  updateEconomicChart(data);
+  updateAttendanceChart(data);
+  updateFactorBars(data);
+  updateInsights(data);
+  updateSimulator();
+  updateDrillBanner();
 }
 
 function onFilterChange() {
@@ -294,10 +754,16 @@ function onFilterChange() {
   updateAllCharts();
 }
 
-// ── Main render ──
 export async function renderAnalytics() {
   const app = document.getElementById('app');
-  app.innerHTML = `<section class="page"><div class="loading-state"><div class="loading-spinner"></div><p>Initializing Analytics Lab…</p></div></section>`;
+  app.innerHTML = `
+    <section class="page">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading retention intelligence...</p>
+      </div>
+    </section>
+  `;
 
   try {
     state.all = await getAllStudents();
@@ -305,105 +771,232 @@ export async function renderAnalytics() {
     state.drillDown = null;
     destroyCharts();
 
-    const areas = [...new Set(state.all.map(s => s.area))];
-    const ecos = [...new Set(state.all.map(s => s.economicStatus))];
+    const areas = [...new Set(state.all.map(student => student.area))];
+    const economicStatuses = [...new Set(state.all.map(student => student.economicStatus))];
 
     app.innerHTML = `
       <section class="page analytics-lab">
-        <div class="page-header"><div><h1 class="page-title">Analytics</h1><p class="page-subtitle">Interactive data exploration laboratory — filter, simulate, and discover insights.</p></div></div>
+        <div class="page-header analytics-header">
+          <div>
+            <h1 class="page-title">Dropout Analytics Center</h1>
+            <p class="page-subtitle">Analyze risk concentration, locate vulnerable groups, and identify intervention priorities for student retention.</p>
+          </div>
+        </div>
+
+        <section class="analytics-narrative" id="analyticsNarrative"></section>
 
         <div id="drillBanner" class="drill-banner"></div>
 
         <div class="analytics-filter-bar">
           <div class="filter-group">
             <label>Area</label>
-            <select id="filter_area" class="filter-select-analytics"><option value="all">All Areas</option>${areas.map(a => `<option value="${a}">${cap(a)}</option>`).join('')}</select>
+            <select id="filter_area" class="filter-select-analytics">
+              <option value="all">All areas</option>
+              ${areas.map(area => `<option value="${escapeHtml(area)}">${escapeHtml(cap(area))}</option>`).join('')}
+            </select>
           </div>
           <div class="filter-group">
             <label>Economic</label>
-            <select id="filter_economicStatus" class="filter-select-analytics"><option value="all">All</option>${ecos.map(e => `<option value="${e}">${cap(e)}</option>`).join('')}</select>
+            <select id="filter_economicStatus" class="filter-select-analytics">
+              <option value="all">All groups</option>
+              ${economicStatuses.map(status => `<option value="${escapeHtml(status)}">${escapeHtml(cap(status))}</option>`).join('')}
+            </select>
           </div>
           <div class="filter-group">
-            <label>Risk Level</label>
-            <select id="filter_riskLevel" class="filter-select-analytics"><option value="all">All</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+            <label>Risk level</label>
+            <select id="filter_riskLevel" class="filter-select-analytics">
+              <option value="all">All levels</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
           </div>
           <button id="resetFilters" class="filter-reset-btn">Reset</button>
           <div id="filterPills" class="filter-pills"></div>
         </div>
 
-        <div class="analytics-summary">
-          <div class="asummary-item" style="--i:0"><span class="asummary-value" id="kpiTotal" style="color:var(--accent-purple)">0</span><span class="asummary-label">Students</span></div>
-          <div class="asummary-item" style="--i:1"><span class="asummary-value" id="kpiHigh" style="color:var(--accent-red)">0</span><span class="asummary-label">High Risk</span></div>
-          <div class="asummary-item" style="--i:2"><span class="asummary-value" id="kpiAtt" data-suffix="%" style="color:var(--accent-green)">0</span><span class="asummary-label">Avg Attendance</span></div>
-          <div class="asummary-item" style="--i:3"><span class="asummary-value" id="kpiRate" data-suffix="%" style="color:var(--accent-amber)">0</span><span class="asummary-label">High Risk Rate</span></div>
+        <div class="analytics-summary analytics-summary-expanded">
+          <div class="asummary-item" style="--i:0">
+            <span class="asummary-value" id="kpiTotal" style="color:var(--accent-purple)">0</span>
+            <span class="asummary-label">Students in view</span>
+          </div>
+          <div class="asummary-item" style="--i:1">
+            <span class="asummary-value" id="kpiHigh" style="color:var(--accent-red)">0</span>
+            <span class="asummary-label">High risk students</span>
+          </div>
+          <div class="asummary-item" style="--i:2">
+            <span class="asummary-value" id="kpiRisk" style="color:var(--accent-amber)">0</span>
+            <span class="asummary-label">Average risk score</span>
+          </div>
+          <div class="asummary-item" style="--i:3">
+            <span class="asummary-value" id="kpiAtt" data-suffix="%" style="color:var(--accent-green)">0</span>
+            <span class="asummary-label">Average attendance</span>
+          </div>
+          <div class="asummary-item analytics-mini-card" style="--i:4">
+            <span class="analytics-mini-label">Primary hotspot</span>
+            <strong id="kpiHotspot">None</strong>
+          </div>
+          <div class="asummary-item analytics-mini-card" style="--i:5">
+            <span class="analytics-mini-label">Leading driver</span>
+            <strong id="kpiDriver">No dominant driver</strong>
+          </div>
         </div>
 
-        <div class="chart-card wide simulator-card" style="--i:4">
-          <p class="chart-title">🧪 Scenario Simulator</p>
-          <p class="chart-sub">What if we improve attendance? See predicted risk shift.</p>
+        <div class="chart-card wide simulator-card" style="--i:6">
+          <p class="chart-title">Attendance Scenario Simulator</p>
+          <p class="chart-sub">Estimate how attendance improvement could shift students out of high-risk status.</p>
           <div class="sim-controls">
-            <label class="sim-label">Target Attendance Improvement: <strong id="simValue">+0%</strong></label>
+            <label class="sim-label">Target attendance improvement <strong id="simValue">+0%</strong></label>
             <input type="range" id="simSlider" class="sim-slider" min="0" max="30" value="0" step="1" />
+            <p class="sim-outcome" id="simOutcome"></p>
           </div>
           <div class="sim-results">
-            <div class="sim-row"><span class="sim-row-label" style="color:#ff5c72">High Risk</span><div id="simHigh" class="sim-bar-container"></div></div>
+            <div class="sim-row"><span class="sim-row-label" style="color:#ff5c72">High risk</span><div id="simHigh" class="sim-bar-container"></div></div>
             <div class="sim-row"><span class="sim-row-label" style="color:#f5a623">Medium</span><div id="simMed" class="sim-bar-container"></div></div>
-            <div class="sim-row"><span class="sim-row-label" style="color:#0dca73">Low Risk</span><div id="simLow" class="sim-bar-container"></div></div>
+            <div class="sim-row"><span class="sim-row-label" style="color:#0dca73">Low</span><div id="simLow" class="sim-bar-container"></div></div>
           </div>
         </div>
 
-        <div class="analytics-grid">
-          <div class="chart-card" style="--i:5"><p class="chart-title">Risk Distribution</p><p class="chart-sub">Click a slice to drill down</p><div style="max-width:280px;margin:0 auto"><canvas id="chRisk"></canvas></div></div>
-          <div class="chart-card" style="--i:6"><p class="chart-title">Students by Area</p><p class="chart-sub">Stacked risk breakdown per area</p><canvas id="chArea"></canvas></div>
-          <div class="chart-card" style="--i:7"><p class="chart-title">Risk Factor Radar</p><p class="chart-sub">Comparing risk profiles across areas</p><canvas id="chRadar"></canvas></div>
-          <div class="chart-card" style="--i:8"><p class="chart-title">Economic Status</p><p class="chart-sub">Income distribution</p><div style="max-width:280px;margin:0 auto"><canvas id="chEco"></canvas></div></div>
-          <div class="chart-card" style="--i:9"><p class="chart-title">Avg Attendance by Area</p><p class="chart-sub">Attendance % across locations</p><canvas id="chAtt"></canvas></div>
-          <div class="chart-card wide" style="--i:10"><p class="chart-title">Top Risk Factors</p><p class="chart-sub">Most common factors driving dropout risk</p><div id="factorBarsContainer" class="factor-bars"></div></div>
+        <div class="analytics-grid analytics-grid-rich">
+          <div class="chart-card" style="--i:7">
+            <p class="chart-title">Risk Distribution</p>
+            <p class="chart-sub">Click a segment to focus on a risk band.</p>
+            <div class="chart-compact"><canvas id="chRisk"></canvas></div>
+          </div>
+
+          <div class="chart-card" style="--i:8">
+            <p class="chart-title">Intervention Priority Clusters</p>
+            <p class="chart-sub">Areas where action is most urgent.</p>
+            <div id="priorityList" class="priority-list"></div>
+          </div>
+
+          <div class="chart-card" style="--i:9">
+            <p class="chart-title">Risk by Area</p>
+            <p class="chart-sub">Stacked breakdown of high, medium, and low risk.</p>
+            <canvas id="chArea"></canvas>
+          </div>
+
+          <div class="chart-card" style="--i:10">
+            <p class="chart-title">Dominant Dropout Drivers</p>
+            <p class="chart-sub">What is most affecting the focus cohort right now.</p>
+            <canvas id="chDrivers"></canvas>
+          </div>
+
+          <div class="chart-card wide" style="--i:11">
+            <p class="chart-title">Driver Breakdown Table</p>
+            <p class="chart-sub">Detailed view of the strongest contributing factors.</p>
+            <div id="driverTable" class="driver-table"></div>
+          </div>
+
+          <div class="chart-card" style="--i:12">
+            <p class="chart-title">Grade-Level Exposure</p>
+            <p class="chart-sub">Which classes show the heaviest concentration of risk.</p>
+            <canvas id="chGrade"></canvas>
+          </div>
+
+          <div class="chart-card" style="--i:13">
+            <p class="chart-title">Area Pressure Index</p>
+            <p class="chart-sub">Composite pressure score by location group.</p>
+            <canvas id="chPressure"></canvas>
+          </div>
+
+          <div class="chart-card" style="--i:14">
+            <p class="chart-title">Area Risk Profile Radar</p>
+            <p class="chart-sub">Compare attendance, academics, commute, and failure burden.</p>
+            <canvas id="chRadar"></canvas>
+          </div>
+
+          <div class="chart-card" style="--i:15">
+            <p class="chart-title">Economic Status Distribution</p>
+            <p class="chart-sub">Click a segment to focus on one economic group.</p>
+            <div class="chart-compact"><canvas id="chEco"></canvas></div>
+          </div>
+
+          <div class="chart-card" style="--i:16">
+            <p class="chart-title">Attendance by Area</p>
+            <p class="chart-sub">Average attendance level across location groups.</p>
+            <canvas id="chAtt"></canvas>
+          </div>
+
+          <div class="chart-card wide" style="--i:17">
+            <p class="chart-title">Top Risk Factors</p>
+            <p class="chart-sub">Most common causes of dropout pressure in the selected cohort.</p>
+            <div id="factorBarsContainer" class="factor-bars"></div>
+          </div>
         </div>
 
-        <div class="chart-card wide insights-section" style="--i:11">
-          <p class="chart-title">💡 Smart Insights</p>
-          <p class="chart-sub">Auto-generated observations from your data. Click to apply filters.</p>
+        <div class="chart-card wide insights-section" style="--i:18">
+          <p class="chart-title">Retention Insights</p>
+          <p class="chart-sub">Auto-generated guidance from current cohort patterns. Click an insight to apply its suggested filter.</p>
           <div id="insightsContainer" class="insights-grid"></div>
         </div>
-      </section>`;
+      </section>
+    `;
 
-    // Wire filter events
-    ['area', 'economicStatus', 'riskLevel'].forEach(k => {
-      document.getElementById(`filter_${k}`)?.addEventListener('change', e => {
-        state.filters[k] = e.target.value;
+    ['area', 'economicStatus', 'riskLevel'].forEach(key => {
+      document.getElementById(`filter_${key}`)?.addEventListener('change', event => {
+        state.filters[key] = event.target.value;
         state.drillDown = null;
         syncFilterUI();
         onFilterChange();
       });
     });
+
     document.getElementById('resetFilters')?.addEventListener('click', () => {
       state.filters = { area: 'all', economicStatus: 'all', riskLevel: 'all' };
       state.drillDown = null;
       syncFilterUI();
       onFilterChange();
     });
+
     document.getElementById('simSlider')?.addEventListener('input', updateSimulator);
 
-    // Initial render
+    syncFilterUI();
     updateAllCharts();
-
-  } catch (err) {
-    app.innerHTML = `<section class="page"><div class="error-state"><span class="error-state-icon">⚠️</span><h2>Failed to load analytics</h2><p>${err.message}</p><p class="error-hint">Make sure the backend server is running on port 3000.</p></div></section>`;
+  } catch (error) {
+    app.innerHTML = `
+      <section class="page">
+        <div class="loading-state">
+          <h2>Failed to load analytics</h2>
+          <p>${escapeHtml(error.message)}</p>
+        </div>
+      </section>
+    `;
   }
 }
 
-// Theme reactivity
 window.addEventListener('themeToggled', () => {
   if (!Object.keys(state.charts).length) return;
-  const c = getTheme();
+
+  const theme = getTheme();
   Object.values(state.charts).forEach(chart => {
-    if (chart.options.plugins?.legend) chart.options.plugins.legend.labels.color = c.t2;
-    if (chart.options.plugins?.tooltip) Object.assign(chart.options.plugins.tooltip, { backgroundColor: c.bgR, borderColor: c.b1, titleColor: c.t1, bodyColor: c.t2 });
-    if (chart.options.scales?.x) { chart.options.scales.x.grid.color = c.b1; chart.options.scales.x.ticks.color = c.t3; }
-    if (chart.options.scales?.y) { chart.options.scales.y.grid.color = c.b1; chart.options.scales.y.ticks.color = c.t3; }
-    if (chart.options.scales?.r) { chart.options.scales.r.grid.color = c.b1; chart.options.scales.r.angleLines.color = c.b1; chart.options.scales.r.pointLabels.color = c.t2; }
-    if (chart.config.type === 'doughnut' || chart.config.type === 'pie') chart.data.datasets[0].borderColor = c.bg;
+    if (chart.options.plugins?.legend?.labels) {
+      chart.options.plugins.legend.labels.color = theme.textSecondary;
+    }
+    if (chart.options.plugins?.tooltip) {
+      Object.assign(chart.options.plugins.tooltip, {
+        backgroundColor: theme.appBg,
+        borderColor: theme.cardBorder,
+        titleColor: theme.textPrimary,
+        bodyColor: theme.textSecondary,
+      });
+    }
+    if (chart.options.scales?.x) {
+      chart.options.scales.x.grid.color = theme.cardBorder;
+      chart.options.scales.x.ticks.color = theme.textMuted;
+    }
+    if (chart.options.scales?.y) {
+      chart.options.scales.y.grid.color = theme.cardBorder;
+      chart.options.scales.y.ticks.color = theme.textMuted;
+    }
+    if (chart.options.scales?.r) {
+      chart.options.scales.r.grid.color = theme.cardBorder;
+      chart.options.scales.r.angleLines.color = theme.cardBorder;
+      chart.options.scales.r.pointLabels.color = theme.textSecondary;
+    }
+    if (chart.config.type === 'doughnut' || chart.config.type === 'pie') {
+      chart.data.datasets[0].borderColor = theme.appBg;
+    }
     chart.update();
   });
 });
