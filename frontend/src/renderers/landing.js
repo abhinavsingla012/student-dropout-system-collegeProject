@@ -4,49 +4,151 @@ export function renderLanding() {
 
   app.innerHTML = `
     <div class="landing">
+      <div class="landing-orb landing-orb-a"></div>
+      <div class="landing-orb landing-orb-b"></div>
       <div class="landing-grid"></div>
-      <div class="landing-glow"></div>
 
-      <section class="hero">
-        <div class="hero-eyebrow">
-          <span class="hero-eyebrow-dot"></span>
-          Data-Driven Student Success
+      <section class="ledger-hero">
+        <div class="ledger-hero-copy">
+          <span class="page-kicker">Student retention intelligence</span>
+          <h1 class="ledger-hero-title">Identify risk, coordinate care, ensure student success.</h1>
+          <p class="ledger-hero-subtitle">
+            The Ledger helps school teams move from prediction to intervention with a live command center,
+            explainable risk drivers, and case-level workflows built for real student support.
+          </p>
+          <div class="ledger-hero-actions">
+            <a href="#/dashboard" class="ledger-button ledger-button-primary">Open Command Center</a>
+            <a href="#/students" class="ledger-button ledger-button-secondary">Explore Student Roster</a>
+          </div>
+          <div class="ledger-proof-strip">
+            <div class="ledger-proof-item">
+              <strong>180+</strong>
+              <span>student records monitored</span>
+            </div>
+            <div class="ledger-proof-item">
+              <strong>5</strong>
+              <span>intervention pathways tracked</span>
+            </div>
+            <div class="ledger-proof-item">
+              <strong>Live</strong>
+              <span>daily briefing for staff teams</span>
+            </div>
+          </div>
         </div>
 
-        <h1 class="hero-title">
-          <span class="hero-title-grad">Predict. Intervene.<br>Succeed.</span>
-        </h1>
+        <div class="ledger-hero-panel surface-card">
+          <div class="ledger-panel-top">
+            <div>
+              <p class="ledger-panel-kicker">Daily operations brief</p>
+              <h2>Today the highest pressure sits in rural and low-income cohorts.</h2>
+            </div>
+            <span class="ledger-live-pill"><span class="status-dot"></span>Live</span>
+          </div>
 
-        <p class="hero-sub">
-          Real-time risk analytics and intervention tracking
-          to identify at-risk students before they fall through the cracks.
-        </p>
+          <div class="ledger-kpi-grid">
+            <article class="ledger-kpi-card">
+              <span class="ledger-kpi-label">High-risk students</span>
+              <strong class="ledger-kpi-value danger">24</strong>
+              <p>Require active monitoring today</p>
+            </article>
+            <article class="ledger-kpi-card">
+              <span class="ledger-kpi-label">Average attendance</span>
+              <strong class="ledger-kpi-value">81%</strong>
+              <p>Across the current cohort</p>
+            </article>
+            <article class="ledger-kpi-card">
+              <span class="ledger-kpi-label">Open interventions</span>
+              <strong class="ledger-kpi-value accent">37</strong>
+              <p>Needs follow-up coordination</p>
+            </article>
+            <article class="ledger-kpi-card">
+              <span class="ledger-kpi-label">Leading driver</span>
+              <strong class="ledger-kpi-value warning">Attendance</strong>
+              <p>Most common trigger this week</p>
+            </article>
+          </div>
 
-        <div class="hero-cta-wrap">
-          <a href="#/dashboard" class="hero-cta">
-            Open Dashboard
-            <span class="hero-cta-arrow">→</span>
-          </a>
+          <div class="ledger-watchlist">
+            <div class="ledger-watchlist-head">
+              <span>Priority watchlist</span>
+              <a href="#/students">Review roster</a>
+            </div>
+            <div class="ledger-watch-item">
+              <div>
+                <strong>Elena Rodriguez</strong>
+                <span>Attendance decline and GPA pressure</span>
+              </div>
+              <mark>88</mark>
+            </div>
+            <div class="ledger-watch-item">
+              <div>
+                <strong>Marcus Vance</strong>
+                <span>Long commute and repeated absences</span>
+              </div>
+              <mark>84</mark>
+            </div>
+            <div class="ledger-watch-item">
+              <div>
+                <strong>Julian Moore</strong>
+                <span>Needs intervention follow-up</span>
+              </div>
+              <mark>72</mark>
+            </div>
+          </div>
         </div>
       </section>
 
-      <div class="features">
-        <div class="feature-card">
-          <div class="feature-icon feature-icon--a">📊</div>
-          <h3 class="feature-title">Predictive Analytics</h3>
-          <p class="feature-desc">Multi-factor risk scoring across attendance, GPA, socioeconomic data, and academic history.</p>
+      <section class="landing-section landing-capabilities">
+        <div class="landing-section-head">
+          <span class="section-kicker">Core capabilities</span>
+          <h2>Built for the school teams who need to act, not just observe.</h2>
+          <p>
+            The product sits between analytics and care management: it detects patterns, prioritizes where staff
+            should focus, and keeps intervention histories visible at the case level.
+          </p>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon feature-icon--b">🔍</div>
-          <h3 class="feature-title">Real-Time Monitoring</h3>
-          <p class="feature-desc">Live dashboards with filterable profiles, trend charts, and drill-down views for 180+ students.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon feature-icon--c">🤝</div>
-          <h3 class="feature-title">Intervention Tracking</h3>
-          <p class="feature-desc">Log counselling, meetings, financial aid, and mentorship — all persisted and auditable.</p>
-        </div>
-      </div>
 
-    </div>`;
+        <div class="landing-feature-grid">
+          <article class="landing-feature landing-feature-wide surface-card">
+            <span class="landing-feature-icon">01</span>
+            <h3>Predictive risk scoring</h3>
+            <p>
+              Combine attendance, GPA, commute burden, economic status, and academic history into a clear,
+              explainable risk signal that staff can trust.
+            </p>
+          </article>
+          <article class="landing-feature surface-card">
+            <span class="landing-feature-icon">02</span>
+            <h3>Student roster intelligence</h3>
+            <p>Searchable and filterable profiles with risk level, dropout probability, and decision-ready metadata.</p>
+          </article>
+          <article class="landing-feature surface-card">
+            <span class="landing-feature-icon">03</span>
+            <h3>Action center workflows</h3>
+            <p>Move directly from an urgent case into intervention logging, follow-up notes, and recommended support types.</p>
+          </article>
+          <article class="landing-feature landing-feature-contrast">
+            <span class="landing-feature-icon">04</span>
+            <h3>Area and cohort analytics</h3>
+            <p>Locate hotspot clusters, compare groups, and understand why pressure is rising before students disengage further.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="landing-section landing-cta-band">
+        <div class="landing-cta-copy">
+          <span class="section-kicker">Operational focus</span>
+          <h2>A calmer, clearer interface for urgent school decisions.</h2>
+          <p>
+            Use the dashboard for the daily brief, the roster for triage, analytics for pattern recognition,
+            and interventions for structured case action.
+          </p>
+        </div>
+        <div class="landing-cta-actions">
+          <a href="#/analytics" class="ledger-button ledger-button-primary">Open Intelligence</a>
+          <a href="#/interventions" class="ledger-button ledger-button-secondary">Go to Action Center</a>
+        </div>
+      </section>
+    </div>
+  `;
 }
