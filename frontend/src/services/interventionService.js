@@ -8,7 +8,23 @@ export async function saveIntervention({ studentId, studentName, type, note }) {
     body: JSON.stringify({ studentId, studentName, type, note }),
   });
 
-  if (!res.ok) throw new Error(`Failed to save intervention: ${res.statusText}`);
+  if (!res.ok) {
+    // Try to parse the error message from the backend (Unit II: express-validator)
+    let errorMessage = res.statusText;
+    try {
+      const errorData = await res.json();
+      if (errorData.errors && errorData.errors.length > 0) {
+        // Return the first validation error message
+        errorMessage = errorData.errors[0].msg;
+      } else if (errorData.error) {
+        errorMessage = errorData.error;
+      }
+    } catch (e) {
+      // Fallback if response is not JSON
+    }
+    throw new Error(errorMessage);
+  }
+  
   return res.json();
 }
 
