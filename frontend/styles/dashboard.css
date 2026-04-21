@@ -1217,7 +1217,7 @@ body.light-mode .alert-widget .widget-title { color: #000000 !important; } /* Pu
 /* Error / Empty state hints */
 .text-danger { color: var(--accent-red) !important; }
 
-/* Ledger Roster */
+/* Students Roster */
 .roster-header {
   display: flex;
   align-items: flex-end;

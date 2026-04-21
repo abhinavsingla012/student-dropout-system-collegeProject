@@ -87,7 +87,7 @@ function renderPressureChart(pressure) {
       labels: pressure.map(item => cap(item.area)),
       datasets: [
         {
-          label: 'Pressure index',
+          label: 'Risk level',
           data: pressure.map(item => item.pressureScore),
           backgroundColor: [theme.accentRed, theme.accentAmber, theme.accentBlue],
           borderRadius: 12,
@@ -180,29 +180,29 @@ export async function renderDashboard() {
       <section class="page dashboard-page">
         <header class="page-header dashboard-header-unique">
           <div>
-            <p class="dashboard-overline">Daily Briefing</p>
-            <h1 class="page-title">Retention Operations Dashboard</h1>
-            <p class="page-subtitle">A fast decision layer for school staff: what needs attention now, where to focus next, and which interventions are already moving.</p>
+            <p class="dashboard-overline">Today's Summary</p>
+            <h1 class="page-title">Student Support Dashboard</h1>
+            <p class="page-subtitle">A fast decision layer for school staff: what needs attention now, where to focus next, and which support actions are already moving.</p>
           </div>
           <div class="status-pill">
             <span class="dot-pulse"></span>
-            Monitoring Live
+            Active Monitoring
           </div>
         </header>
 
         <section class="dashboard-briefing-band">
           <div class="dashboard-briefing-main">
-            <span class="dashboard-briefing-label">Today’s Brief</span>
+            <span class="dashboard-briefing-label">Today’s Overview</span>
             <h2>${escapeHtml(narrative.headline)}</h2>
             <p>${escapeHtml(narrative.detail)}</p>
           </div>
           <div class="dashboard-briefing-side">
             <div class="dashboard-brief-stat">
-              <span>Immediate watchlist</span>
+              <span>Needs Attention</span>
               <strong>${kpis.high}</strong>
             </div>
             <div class="dashboard-brief-stat">
-              <span>Average attendance</span>
+              <span>Avg. Attendance</span>
               <strong>${kpis.avgAtt}%</strong>
             </div>
           </div>
@@ -210,22 +210,22 @@ export async function renderDashboard() {
 
         <section class="dashboard-metric-ribbon">
           <article class="dashboard-ribbon-card">
-            <span class="dashboard-ribbon-label">Students</span>
+            <span class="dashboard-ribbon-label">Total Students</span>
             <strong class="dashboard-ribbon-value">${kpis.total}</strong>
             <p class="dashboard-ribbon-note">Total monitored in the system</p>
           </article>
           <article class="dashboard-ribbon-card">
-            <span class="dashboard-ribbon-label">High Risk</span>
+            <span class="dashboard-ribbon-label">At Risk</span>
             <strong class="dashboard-ribbon-value danger">${kpis.high}</strong>
             <p class="dashboard-ribbon-note">${kpis.highRate}% of the cohort</p>
           </article>
           <article class="dashboard-ribbon-card">
             <span class="dashboard-ribbon-label">Average Risk</span>
             <strong class="dashboard-ribbon-value warning">${kpis.avgRisk}</strong>
-            <p class="dashboard-ribbon-note">Composite risk score</p>
+            <p class="dashboard-ribbon-note">Risk level</p>
           </article>
           <article class="dashboard-ribbon-card">
-            <span class="dashboard-ribbon-label">Interventions</span>
+            <span class="dashboard-ribbon-label">Support Log</span>
             <strong class="dashboard-ribbon-value accent">${interventions.length}</strong>
             <p class="dashboard-ribbon-note">Logged support actions</p>
           </article>
@@ -235,8 +235,8 @@ export async function renderDashboard() {
           <article class="dashboard-panel dashboard-panel-priority">
             <div class="dashboard-panel-head">
               <div>
-                <span class="dashboard-panel-kicker">Primary Focus Zone</span>
-                <h3 class="dashboard-panel-title">${escapeHtml(primaryCluster?.title || 'No hotspot cluster')}</h3>
+                <span class="dashboard-panel-kicker">Top Priority</span>
+                <h3 class="dashboard-panel-title">${escapeHtml(primaryCluster?.title || 'No priority area')}</h3>
               </div>
               <span class="dashboard-priority-badge">${primaryCluster?.pressureScore ?? 0}</span>
             </div>
@@ -247,8 +247,8 @@ export async function renderDashboard() {
             <p class="dashboard-priority-copy">${escapeHtml(primaryCluster?.recommendedAction || 'Continue observing the current cohort.')}</p>
             <div class="dashboard-followup-row">
               <div class="dashboard-followup-card">
-                <span class="dashboard-followup-label">Secondary cluster</span>
-                <strong>${escapeHtml(followupCluster?.title || 'No secondary cluster')}</strong>
+                <span>Secondary area</span>
+                <strong>${escapeHtml(followupCluster?.title || 'No secondary area')}</strong>
               </div>
               <div class="dashboard-followup-card">
                 <span class="dashboard-followup-label">System note</span>
@@ -260,8 +260,8 @@ export async function renderDashboard() {
           <article class="dashboard-panel dashboard-panel-queue">
             <div class="dashboard-panel-head">
               <div>
-                <span class="dashboard-panel-kicker">Urgent Watchlist</span>
-                <h3 class="dashboard-panel-title">Students needing attention</h3>
+                <span class="dashboard-panel-kicker">Attention Required</span>
+                <h3 class="dashboard-panel-title">Students needing help</h3>
               </div>
             </div>
             <div class="dashboard-watchlist">
@@ -286,8 +286,8 @@ export async function renderDashboard() {
           <article class="dashboard-panel dashboard-panel-chart">
             <div class="dashboard-panel-head">
               <div>
-                <span class="dashboard-panel-kicker">Regional Signal</span>
-                <h3 class="dashboard-panel-title">Pressure by area</h3>
+                <span class="dashboard-panel-kicker">Location Overview</span>
+                <h3 class="dashboard-panel-title">Risk by area</h3>
               </div>
             </div>
             <div class="dashboard-chart-frame">
@@ -298,8 +298,8 @@ export async function renderDashboard() {
           <article class="dashboard-panel dashboard-panel-chart">
             <div class="dashboard-panel-head">
               <div>
-                <span class="dashboard-panel-kicker">Root Causes</span>
-                <h3 class="dashboard-panel-title">Top dropout drivers</h3>
+                <span class="dashboard-panel-kicker">Reasons for Dropout</span>
+                <h3 class="dashboard-panel-title">Common issues</h3>
               </div>
             </div>
             <div class="dashboard-chart-frame">
@@ -312,8 +312,8 @@ export async function renderDashboard() {
           <article class="dashboard-panel dashboard-panel-log">
             <div class="dashboard-panel-head">
               <div>
-                <span class="dashboard-panel-kicker">Recent Movement</span>
-                <h3 class="dashboard-panel-title">Intervention timeline</h3>
+                <span class="dashboard-panel-kicker">Recent Help</span>
+                <h3 class="dashboard-panel-title">Support timeline</h3>
               </div>
             </div>
             <div class="dashboard-timeline-list">
@@ -342,8 +342,8 @@ export async function renderDashboard() {
           <article class="dashboard-panel dashboard-panel-summary">
             <div class="dashboard-panel-head">
               <div>
-                <span class="dashboard-panel-kicker">Operational Summary</span>
-                <h3 class="dashboard-panel-title">Key drivers at a glance</h3>
+                <span class="dashboard-panel-kicker">System Summary</span>
+                <h3 class="dashboard-panel-title">Main issues at a glance</h3>
               </div>
             </div>
             <div class="dashboard-driver-stack">

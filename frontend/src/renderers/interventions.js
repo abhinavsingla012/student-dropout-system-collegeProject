@@ -179,7 +179,7 @@ export async function renderInterventions() {
       <section class="page">
         <div class="page-header analytics-header">
           <div>
-            <h1 class="page-title">Intervention Action Center</h1>
+            <h1 class="page-title">Interventions</h1>
             <p class="page-subtitle">Translate the analytics findings into targeted action, prioritize urgent cases, and maintain a structured intervention log.</p>
           </div>
         </div>

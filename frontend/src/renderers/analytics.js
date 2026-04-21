@@ -152,7 +152,7 @@ function updateNarrative(data) {
   if (!root) return;
 
   root.innerHTML = `
-    <div class="narrative-kicker">Dropout Intelligence</div>
+    <div class="narrative-kicker">Risk Analysis</div>
     <h2 class="narrative-title">${escapeHtml(narrative.headline)}</h2>
     <p class="narrative-copy">${escapeHtml(narrative.detail)}</p>
     <p class="narrative-support">${escapeHtml(narrative.support)}</p>
@@ -279,9 +279,9 @@ function updateSimulator() {
   const projectedShift = after.high - before.high;
   document.getElementById('simOutcome').textContent =
     projectedShift < 0
-      ? `${Math.abs(projectedShift)} fewer students remain in high-risk status.`
+      ? `${Math.abs(projectedShift)} fewer students remain at risk.`
       : projectedShift > 0
-        ? `${projectedShift} more students remain in high-risk status.`
+        ? `${projectedShift} more students remain at risk.`
         : 'No change in high-risk count at the current threshold.';
 
   const renderBar = (id, beforeValue, afterValue, color) => {
@@ -320,7 +320,7 @@ function updateDrillBanner() {
 
   if (state.drillDown) {
     root.innerHTML = `
-      <span>Viewing ${escapeHtml(cap(state.drillDown.value))} ${escapeHtml(state.drillDown.type)} in focus mode</span>
+      <span>Focusing on ${escapeHtml(cap(state.drillDown.value))} ${escapeHtml(state.drillDown.type)}</span>
       <button id="drillExit" class="drill-exit">Reset</button>
     `;
     root.classList.add('active');
@@ -469,7 +469,7 @@ function updateDriverChart(data) {
       labels: drivers.map(driver => driver.label),
       datasets: [
         {
-          label: 'Affected share (%)',
+          label: 'Affected %',
           data: drivers.map(driver => driver.share),
           backgroundColor: [
             theme.accentPurple,
@@ -560,7 +560,7 @@ function updatePressureChart(data) {
       labels: pressure.map(item => cap(item.area)),
       datasets: [
         {
-          label: 'Pressure index',
+          label: 'Risk Level',
           data: pressure.map(item => item.pressureScore),
           borderColor: theme.accentPurple,
           backgroundColor: `${theme.accentPurple}20`,
@@ -760,7 +760,7 @@ export async function renderAnalytics() {
     <section class="page">
       <div class="loading-state">
         <div class="spinner"></div>
-        <p>Loading retention intelligence...</p>
+        <p>Loading student support info...</p>
       </div>
     </section>
   `;
@@ -778,8 +778,8 @@ export async function renderAnalytics() {
       <section class="page analytics-lab">
         <div class="page-header analytics-header">
           <div>
-            <h1 class="page-title">Dropout Analytics Center</h1>
-            <p class="page-subtitle">Analyze risk concentration, locate vulnerable groups, and identify intervention priorities for student retention.</p>
+            <h1 class="page-title">Student Support Center</h1>
+            <p class="page-subtitle">Find where help is needed, locate students needing support, and identify support priorities for student retention.</p>
           </div>
         </div>
 
@@ -843,7 +843,7 @@ export async function renderAnalytics() {
         </div>
 
         <div class="chart-card wide simulator-card" style="--i:6">
-          <p class="chart-title">Attendance Scenario Simulator</p>
+          <p class="chart-title">Attendance Helper Tool</p>
           <p class="chart-sub">Estimate how attendance improvement could shift students out of high-risk status.</p>
           <div class="sim-controls">
             <label class="sim-label">Target attendance improvement <strong id="simValue">+0%</strong></label>
@@ -865,7 +865,7 @@ export async function renderAnalytics() {
           </div>
 
           <div class="chart-card" style="--i:8">
-            <p class="chart-title">Intervention Priority Clusters</p>
+            <p class="chart-title">Support Priority Areas</p>
             <p class="chart-sub">Areas where action is most urgent.</p>
             <div id="priorityList" class="priority-list"></div>
           </div>
@@ -877,37 +877,37 @@ export async function renderAnalytics() {
           </div>
 
           <div class="chart-card" style="--i:10">
-            <p class="chart-title">Dominant Dropout Drivers</p>
+            <p class="chart-title">Common Dropout Reasons</p>
             <p class="chart-sub">What is most affecting the focus cohort right now.</p>
             <canvas id="chDrivers"></canvas>
           </div>
 
           <div class="chart-card wide" style="--i:11">
-            <p class="chart-title">Driver Breakdown Table</p>
+            <p class="chart-title">Issues Table</p>
             <p class="chart-sub">Detailed view of the strongest contributing factors.</p>
             <div id="driverTable" class="driver-table"></div>
           </div>
 
           <div class="chart-card" style="--i:12">
-            <p class="chart-title">Grade-Level Exposure</p>
+            <p class="chart-title">Risk by Grade</p>
             <p class="chart-sub">Which classes show the heaviest concentration of risk.</p>
             <canvas id="chGrade"></canvas>
           </div>
 
           <div class="chart-card" style="--i:13">
-            <p class="chart-title">Area Pressure Index</p>
+            <p class="chart-title">Area Risk Level</p>
             <p class="chart-sub">Composite pressure score by location group.</p>
             <canvas id="chPressure"></canvas>
           </div>
 
           <div class="chart-card" style="--i:14">
-            <p class="chart-title">Area Risk Profile Radar</p>
+            <p class="chart-title">Area Risk Comparison</p>
             <p class="chart-sub">Compare attendance, academics, commute, and failure burden.</p>
             <canvas id="chRadar"></canvas>
           </div>
 
           <div class="chart-card" style="--i:15">
-            <p class="chart-title">Economic Status Distribution</p>
+            <p class="chart-title">Financial Status</p>
             <p class="chart-sub">Click a segment to focus on one economic group.</p>
             <div class="chart-compact"><canvas id="chEco"></canvas></div>
           </div>
@@ -919,14 +919,14 @@ export async function renderAnalytics() {
           </div>
 
           <div class="chart-card wide" style="--i:17">
-            <p class="chart-title">Top Risk Factors</p>
+            <p class="chart-title">Main Risk Factors</p>
             <p class="chart-sub">Most common causes of dropout pressure in the selected cohort.</p>
             <div id="factorBarsContainer" class="factor-bars"></div>
           </div>
         </div>
 
         <div class="chart-card wide insights-section" style="--i:18">
-          <p class="chart-title">Retention Insights</p>
+          <p class="chart-title">System Advice</p>
           <p class="chart-sub">Auto-generated guidance from current cohort patterns. Click an insight to apply its suggested filter.</p>
           <div id="insightsContainer" class="insights-grid"></div>
         </div>

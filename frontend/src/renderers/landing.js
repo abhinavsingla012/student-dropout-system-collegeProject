@@ -10,15 +10,15 @@ export function renderLanding() {
 
       <section class="ledger-hero">
         <div class="ledger-hero-copy">
-          <span class="page-kicker">Student retention intelligence</span>
+          <span class="page-kicker">Student dropout analysis</span>
           <h1 class="ledger-hero-title">Identify risk, coordinate care, ensure student success.</h1>
           <p class="ledger-hero-subtitle">
-            The Ledger helps school teams move from prediction to intervention with a live command center,
+            SDAS helps school teams move from prediction to intervention with a live dashboard,
             explainable risk drivers, and case-level workflows built for real student support.
           </p>
           <div class="ledger-hero-actions">
-            <a href="#/dashboard" class="ledger-button ledger-button-primary">Open Command Center</a>
-            <a href="#/students" class="ledger-button ledger-button-secondary">Explore Student Roster</a>
+            <a href="#/dashboard" class="ledger-button ledger-button-primary">Open Dashboard</a>
+            <a href="#/students" class="ledger-button ledger-button-secondary">Explore Students</a>
           </div>
           <div class="ledger-proof-strip">
             <div class="ledger-proof-item">
@@ -145,8 +145,8 @@ export function renderLanding() {
           </p>
         </div>
         <div class="landing-cta-actions">
-          <a href="#/analytics" class="ledger-button ledger-button-primary">Open Intelligence</a>
-          <a href="#/interventions" class="ledger-button ledger-button-secondary">Go to Action Center</a>
+          <a href="#/analytics" class="ledger-button ledger-button-primary">Open Analytics</a>
+          <a href="#/interventions" class="ledger-button ledger-button-secondary">Go to Interventions</a>
         </div>
       </section>
     </div>

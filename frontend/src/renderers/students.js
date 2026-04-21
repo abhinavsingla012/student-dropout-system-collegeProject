@@ -55,7 +55,7 @@ function buildRows(students) {
           <td class="roster-cell">
             <div class="roster-score-cell">
               <strong>${student.gpa}</strong>
-              <span>${student.previousFailures} prior failures</span>
+              <span>${student.previousFailures} past fails</span>
             </div>
           </td>
           <td class="roster-cell">
@@ -103,7 +103,7 @@ function buildPriorityList(students) {
 
 function buildInsight(filtered) {
   if (!filtered.length) {
-    return 'No students match the current filters. Clear the filters to restore the full roster view.';
+    return 'No students match the current filters. Clear the filters to restore the full list view.';
   }
 
   const lowIncomeHighRisk = filtered.filter(
@@ -119,7 +119,7 @@ function buildInsight(filtered) {
     return `${attendanceConcern} students in the current roster snapshot are below 75% attendance. Attendance recovery is the dominant near-term intervention opportunity.`;
   }
 
-  return 'The current roster slice is relatively stable. Continue preventive monitoring and keep follow-up notes current for medium-risk students.';
+  return 'The current list selection is relatively stable. Continue preventive monitoring and keep follow-up notes current for medium-risk students.';
 }
 
 export async function renderStudents() {
@@ -128,7 +128,7 @@ export async function renderStudents() {
     <section class="page">
       <div class="loading-state">
         <div class="loading-spinner"></div>
-        <p>Loading student roster...</p>
+        <p>Loading student list...</p>
       </div>
     </section>`;
 
@@ -136,18 +136,18 @@ export async function renderStudents() {
     const all = await getAllStudents();
 
     app.innerHTML = `
-      <section class="page roster-page">
-        <div class="page-header roster-header">
+        <section class="page roster-page">
+          <div class="page-header roster-header">
           <div>
-            <span class="page-kicker">Global roster</span>
-            <h1 class="page-title">Student Roster</h1>
+            <span class="page-kicker">Student List</span>
+            <h1 class="page-title">Students</h1>
             <p class="page-subtitle">
-              Monitor the full student population, scan for risk quickly, and move directly from roster review into case-level action.
+              Monitor the full student population, scan for risk quickly, and move directly from list review into helping students.
             </p>
           </div>
           <div class="roster-top-metrics">
             <article class="roster-mini-metric surface-card">
-              <span>Active alerts</span>
+              <span>Urgent Cases</span>
               <strong>${all.filter(student => student.status === 'high').length}</strong>
             </article>
             <article class="roster-mini-metric surface-card">
@@ -208,8 +208,8 @@ export async function renderStudents() {
 
           <aside class="roster-side-column">
             <article class="roster-insight-card">
-              <span class="section-kicker">Roster insight</span>
-              <h2>Economic shifts</h2>
+              <span class="section-kicker">List Summary</span>
+              <h2>Financial info</h2>
               <p id="rosterInsight">${escapeHtml(buildInsight(all))}</p>
             </article>
             <article class="roster-priority-card surface-card">

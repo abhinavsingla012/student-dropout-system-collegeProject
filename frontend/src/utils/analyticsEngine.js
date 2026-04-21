@@ -298,7 +298,7 @@ export function interventionPriorities(students) {
 
       return {
         ...item,
-        title: `${cap(item.area)} intervention cluster`,
+        title: `${cap(item.area)} priority group`,
         driver: topDriver?.label || 'Multiple factors',
         recommendedAction,
       };
@@ -314,10 +314,10 @@ export function buildCohortNarrative(students) {
 
   return {
     headline: topHotspot
-      ? `${cap(topHotspot.area)} students show the highest dropout pressure.`
-      : 'Cohort overview is ready.',
+      ? `${cap(topHotspot.area)} students show the highest dropout risk.`
+      : 'Overview is ready.',
     detail: topDriver
-      ? `${topDriver.share}% of the focus cohort is affected by ${topDriver.label.toLowerCase()}.`
+      ? `${topDriver.share}% of the at-risk group is affected by ${topDriver.label.toLowerCase()}.`
       : 'No dominant risk driver was found for the current filters.',
     support: `${kpis.high} high-risk and ${kpis.medium} medium-risk students need monitoring.`,
   };
@@ -356,7 +356,7 @@ export function generateInsights(students) {
     insights.push({
       icon: 'Target',
       severity: 'high',
-      text: `${priorities[0].title} should be prioritized first with ${priorities[0].highRate}% high-risk concentration.`,
+      text: `${priorities[0].title} should be prioritized first with ${priorities[0].highRate}% high-risk density.`,
       filter: { area: priorities[0].area },
     });
   }
@@ -365,7 +365,7 @@ export function generateInsights(students) {
     insights.push({
       icon: 'Cause',
       severity: 'high',
-      text: `${drivers[0].share}% of the focus cohort is affected by ${drivers[0].label.toLowerCase()}.`,
+      text: `${drivers[0].share}% of the at-risk group is affected by ${drivers[0].label.toLowerCase()}.`,
       filter: { riskLevel: 'high' },
     });
   }
@@ -374,7 +374,7 @@ export function generateInsights(students) {
     insights.push({
       icon: 'Grade',
       severity: 'medium',
-      text: `${grades[0].grade} currently has the highest high-risk concentration at ${grades[0].highRate}%.`,
+      text: `${grades[0].grade} currently has the highest high-risk density at ${grades[0].highRate}%.`,
       filter: { riskLevel: 'high' },
     });
   }
