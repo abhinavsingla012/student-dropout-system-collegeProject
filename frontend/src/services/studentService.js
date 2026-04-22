@@ -28,7 +28,10 @@ export function enrichStudent(student) {
 
 // ── Fetch all students (enriched) ──
 export async function getAllStudents() {
-  const res = await fetch(`${API_BASE}/students`);
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API_BASE}/students`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
   if (!res.ok) throw new Error(`Failed to fetch students: ${res.statusText}`);
   const raw = await res.json();
   return raw.map(enrichStudent);
@@ -36,7 +39,10 @@ export async function getAllStudents() {
 
 // ── Fetch single student by ID (enriched) ──
 export async function getStudentById(id) {
-  const res = await fetch(`${API_BASE}/students/${id}`);
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API_BASE}/students/${id}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
   if (!res.ok) return null;
   const raw = await res.json();
   return enrichStudent(raw);

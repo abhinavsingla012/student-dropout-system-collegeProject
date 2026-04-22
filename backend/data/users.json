@@ -1,0 +1,9 @@
+[
+  {
+    "id": 1,
+    "name": "Admin Counselor",
+    "email": "admin@sdas.com",
+    "password": "$2b$10$zHAvqu3yeQlHq9wHvJ1EiuRDQHAbaY8u8VCnDVgyiW//m2BBO3oC2",
+    "role": "admin"
+  }
+]

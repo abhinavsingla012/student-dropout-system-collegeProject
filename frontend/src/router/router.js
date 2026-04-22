@@ -4,22 +4,39 @@ import { renderStudents }      from '../renderers/students.js';
 import { renderStudentDetail } from '../renderers/studentDetail.js';
 import { renderAnalytics }     from '../renderers/analytics.js';
 import { renderInterventions } from '../renderers/interventions.js';
+import { renderLogin }         from '../renderers/login.js';
 
 export function renderPage() {
   const hash = window.location.hash || '#/home';
   const app  = document.getElementById('app');
+  const token = localStorage.getItem('token');
 
-  // Reset layout classes from landing page
+  // Public routes that don't need login
+  const isLanding = hash === '#/home' || hash === '#/' || hash === '';
+  const isLogin = hash === '#/login';
+
+  // Auth Guard: If not logged in and trying to access private page, go to login
+  if (!token && !isLanding && !isLogin) {
+    window.location.hash = '#/login';
+    return;
+  }
+
+  // Reset layout classes
   app.classList.remove('full-width');
 
-  // Navbar and Footer are now global
-  document.getElementById('appHeader')?.classList.remove('hidden');
-  document.getElementById('appFooter')?.classList.remove('hidden');
+  // Handle Global UI (Header/Footer) visibility
+  if (isLogin) {
+    document.getElementById('appHeader')?.classList.add('hidden');
+    document.getElementById('appFooter')?.classList.add('hidden');
+  } else {
+    document.getElementById('appHeader')?.classList.remove('hidden');
+    document.getElementById('appFooter')?.classList.remove('hidden');
+  }
 
   setActiveNav(hash);
 
-  const isLanding = hash === '#/home' || hash === '#/' || hash === '';
   if      (isLanding)                       renderLanding();
+  else if (isLogin)                         renderLogin();
   else if (hash === '#/dashboard')          renderDashboard();
   else if (hash === '#/students')           renderStudents();
   else if (hash === '#/interventions')      renderInterventions();

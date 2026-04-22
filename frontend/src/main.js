@@ -32,4 +32,39 @@ if (themeBtn) {
   });
 }
 
+// Logout Logic (Unit III)
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.hash = '#/login';
+  });
+}
+
+// Global Auth UI State
+function checkAuthState() {
+  const token = localStorage.getItem('token');
+  const logoutBtn = document.getElementById('logout-btn');
+  const loginLink = document.getElementById('login-link');
+  const appNav = document.getElementById('appNav');
+  const headerPresence = document.getElementById('headerPresence');
+  
+  if (token) {
+    logoutBtn?.classList.remove('hidden');
+    appNav?.classList.remove('hidden');
+    headerPresence?.classList.remove('hidden');
+    loginLink?.classList.add('hidden');
+  } else {
+    logoutBtn?.classList.add('hidden');
+    appNav?.classList.add('hidden');
+    headerPresence?.classList.add('hidden');
+    loginLink?.classList.remove('hidden');
+  }
+}
+
+window.addEventListener('hashchange', checkAuthState);
+window.addEventListener('load', checkAuthState);
+
 initTheme();
+checkAuthState();

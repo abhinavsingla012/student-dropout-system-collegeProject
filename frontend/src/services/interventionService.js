@@ -2,9 +2,13 @@ const API_BASE = 'http://localhost:3000/api';
 
 // ── Save a new intervention via POST ──
 export async function saveIntervention({ studentId, studentName, type, note }) {
+  const token = localStorage.getItem('token');
   const res = await fetch(`${API_BASE}/interventions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
     body: JSON.stringify({ studentId, studentName, type, note }),
   });
 
@@ -14,14 +18,11 @@ export async function saveIntervention({ studentId, studentName, type, note }) {
     try {
       const errorData = await res.json();
       if (errorData.errors && errorData.errors.length > 0) {
-        // Return the first validation error message
         errorMessage = errorData.errors[0].msg;
       } else if (errorData.error) {
         errorMessage = errorData.error;
       }
-    } catch (e) {
-      // Fallback if response is not JSON
-    }
+    } catch (e) {}
     throw new Error(errorMessage);
   }
   
@@ -30,14 +31,20 @@ export async function saveIntervention({ studentId, studentName, type, note }) {
 
 // ── Fetch interventions for a specific student ──
 export async function getInterventionsForStudent(studentId) {
-  const res = await fetch(`${API_BASE}/interventions?studentId=${studentId}`);
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API_BASE}/interventions?studentId=${studentId}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
   if (!res.ok) throw new Error(`Failed to fetch interventions: ${res.statusText}`);
   return res.json();
 }
 
 // ── Fetch all interventions (newest first) ──
 export async function getAllInterventions() {
-  const res = await fetch(`${API_BASE}/interventions`);
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API_BASE}/interventions`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
   if (!res.ok) throw new Error(`Failed to fetch interventions: ${res.statusText}`);
   return res.json();
 }

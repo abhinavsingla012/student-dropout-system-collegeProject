@@ -2,7 +2,18 @@ export function renderLanding() {
   const app = document.getElementById('app');
   app.classList.add('full-width');
 
-  app.innerHTML = `
+    const token = localStorage.getItem('token');
+    const heroButtons = token 
+      ? `<a href="#/dashboard" class="ledger-button ledger-button-primary">Open Dashboard</a>
+         <a href="#/students" class="ledger-button ledger-button-secondary">Explore Students</a>`
+      : `<a href="#/login" class="ledger-button ledger-button-primary">Log In to Access Terminal</a>`;
+
+    const ctaButtons = token
+      ? `<a href="#/analytics" class="ledger-button ledger-button-primary">Open Analytics</a>
+         <a href="#/interventions" class="ledger-button ledger-button-secondary">Go to Interventions</a>`
+      : `<a href="#/login" class="ledger-button ledger-button-primary">Sign In for Institutional Access</a>`;
+
+    app.innerHTML = `
     <div class="landing">
       <div class="landing-orb landing-orb-a"></div>
       <div class="landing-orb landing-orb-b"></div>
@@ -17,8 +28,7 @@ export function renderLanding() {
             explainable risk drivers, and case-level workflows built for real student support.
           </p>
           <div class="ledger-hero-actions">
-            <a href="#/dashboard" class="ledger-button ledger-button-primary">Open Dashboard</a>
-            <a href="#/students" class="ledger-button ledger-button-secondary">Explore Students</a>
+            ${heroButtons}
           </div>
           <div class="ledger-proof-strip">
             <div class="ledger-proof-item">
@@ -71,7 +81,7 @@ export function renderLanding() {
           <div class="ledger-watchlist">
             <div class="ledger-watchlist-head">
               <span>Priority watchlist</span>
-              <a href="#/students">Review roster</a>
+              ${token ? '<a href="#/students">Review roster</a>' : '<span class="text-muted">Login to review roster</span>'}
             </div>
             <div class="ledger-watch-item">
               <div>
@@ -145,8 +155,7 @@ export function renderLanding() {
           </p>
         </div>
         <div class="landing-cta-actions">
-          <a href="#/analytics" class="ledger-button ledger-button-primary">Open Analytics</a>
-          <a href="#/interventions" class="ledger-button ledger-button-secondary">Go to Interventions</a>
+          ${ctaButtons}
         </div>
       </section>
     </div>
