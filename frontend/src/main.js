@@ -1,4 +1,5 @@
 import { renderPage } from './router/router.js';
+import { clearUnreadAlerts, disconnectRealtime, syncRealtimeAuth } from './services/realtimeService.js';
 
 window.addEventListener('hashchange', renderPage);
 renderPage();
@@ -36,30 +37,51 @@ if (themeBtn) {
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
   logoutBtn.addEventListener('click', () => {
+    disconnectRealtime();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.hash = '#/login';
   });
 }
 
+const headerPresence = document.getElementById('headerPresence');
+if (headerPresence) {
+  headerPresence.addEventListener('click', () => {
+    clearUnreadAlerts();
+  });
+}
+
 // Global Auth UI State
 function checkAuthState() {
   const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  
   const logoutBtn = document.getElementById('logout-btn');
   const loginLink = document.getElementById('login-link');
   const appNav = document.getElementById('appNav');
-  const headerPresence = document.getElementById('headerPresence');
+  const headerPresenceEl = document.getElementById('headerPresence');
+  const navCounselors = document.getElementById('navCounselors');
   
   if (token) {
+    syncRealtimeAuth({ token, user });
     logoutBtn?.classList.remove('hidden');
     appNav?.classList.remove('hidden');
-    headerPresence?.classList.remove('hidden');
+    headerPresenceEl?.classList.remove('hidden');
     loginLink?.classList.add('hidden');
+    
+    // Role-based links (Unit III)
+    if (user.role === 'admin') {
+      navCounselors?.classList.remove('hidden');
+    } else {
+      navCounselors?.classList.add('hidden');
+    }
   } else {
+    disconnectRealtime();
     logoutBtn?.classList.add('hidden');
     appNav?.classList.add('hidden');
-    headerPresence?.classList.add('hidden');
+    headerPresenceEl?.classList.add('hidden');
     loginLink?.classList.remove('hidden');
+    navCounselors?.classList.add('hidden');
   }
 }
 

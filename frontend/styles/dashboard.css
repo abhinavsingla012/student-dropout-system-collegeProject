@@ -17,7 +17,7 @@
   --text-muted: #666666;
   
   --accent-purple: #818cf8;
-  --accent-blue: #38bdf8;
+  --accent-blue: #38bdf8; 
   --accent-green: #34d399;
   --accent-red: #fb7185;
   --accent-amber: #fbbf24;
@@ -1315,7 +1315,8 @@ body.light-mode .alert-widget .widget-title { color: #000000 !important; } /* Pu
 }
 
 .roster-table-shell {
-  overflow: hidden;
+  overflow: auto;
+  max-height: calc(100vh - 180px);
 }
 
 .roster-table {
@@ -1517,22 +1518,30 @@ body.light-mode .alert-widget .widget-title { color: #000000 !important; } /* Pu
 }
 
 .roster-action-button {
-  border: none;
+  border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: 12px;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
   color: #fff;
-  padding: 0.7rem 0.95rem;
+  padding: 0.62rem 0.9rem;
   font-family: var(--fl);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.roster-action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(56, 189, 248, 0.25);
 }
 
 .roster-side-column {
   display: grid;
   gap: 1rem;
+  position: sticky;
+  top: 88px;
 }
 
 .roster-insight-card,
@@ -1683,4 +1692,258 @@ body:not(.light-mode) .roster-insight-card {
 
 .logout-btn.hidden {
   display: none;
+}
+/* Staff Management Styles */
+.counselor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.staff-card {
+  padding: 1.5rem;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.staff-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.staff-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.staff-info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.staff-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.staff-role-badge {
+  margin-left: auto;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+  padding: 0.35rem 0.6rem;
+  background: rgba(0, 163, 255, 0.1);
+  color: #38bdf8;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.workload-section {
+  padding: 0 0.25rem;
+}
+
+.workload-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.staff-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  gap: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.assigned-list {
+  font-size: 0.85rem;
+}
+
+.list-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--text-muted);
+}
+
+.student-mini-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.manage-assignment-box {
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  border: 1px dashed var(--card-border);
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+}
+
+.assign-label {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.65rem;
+}
+
+.assignment-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.assign-select {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  background: var(--bg-card) !important;
+  border-color: var(--card-border) !important;
+  color: var(--text-primary) !important;
+}
+
+.assign-btn {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  color: #fff;
+  height: 40px;
+  padding: 0 1rem;
+  min-width: 98px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.assign-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.assign-meta {
+  margin-top: 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.73rem;
+}
+
+.student-tag {
+  border: 1px solid var(--card-border);
+  background: var(--bg-card);
+  padding: 0.25rem 0.6rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.student-tag.clickable {
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.student-tag.clickable:hover {
+  color: var(--text-primary);
+  border-color: var(--card-hover-border);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 560px) {
+  .assignment-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .assign-btn {
+    width: 100%;
+  }
+}
+
+/* Counselor Roster Card */
+.roster-my-students-card {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(145deg, rgba(56, 189, 248, 0.05), rgba(0, 0, 0, 0));
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  border-left: 4px solid #0ea5e9;
+}
+
+.student-tag-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--card-border);
+  padding: 0.4rem 0.8rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.student-tag-btn:hover {
+  background: color-mix(in srgb, var(--accent-blue) 18%, transparent);
+  border-color: var(--accent-blue);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+}
+
+.assigned-badge-mini {
+  font-size: 9px;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--accent-blue) 85%, #ffffff 15%);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 100px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 4px rgba(14, 165, 233, 0.22);
 }

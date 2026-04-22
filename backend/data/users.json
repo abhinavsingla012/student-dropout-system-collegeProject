@@ -5,5 +5,19 @@
     "email": "admin@sdas.com",
     "password": "$2b$10$zHAvqu3yeQlHq9wHvJ1EiuRDQHAbaY8u8VCnDVgyiW//m2BBO3oC2",
     "role": "admin"
+  },
+  {
+    "id": 2,
+    "name": "Rahul Sharma",
+    "email": "rahul@sdas.com",
+    "password": "$2b$10$5.04ef0Bb2sTSvjNHDKTQeSyENP9D.CC8aj67YX8iBLeDIoSf9Z7G",
+    "role": "counselor"
+  },
+  {
+    "id": 3,
+    "name": "Priya Singh",
+    "email": "priya@sdas.com",
+    "password": "$2b$10$5.04ef0Bb2sTSvjNHDKTQeSyENP9D.CC8aj67YX8iBLeDIoSf9Z7G",
+    "role": "counselor"
   }
 ]

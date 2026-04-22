@@ -43,11 +43,13 @@
           <a href="#/students" class="nav-link" data-nav>Students</a>
           <a href="#/analytics" class="nav-link" data-nav>Analytics</a>
           <a href="#/interventions" class="nav-link" data-nav>Interventions</a>
+          <a href="#/counselors" id="navCounselors" class="nav-link hidden" data-nav>Counselors</a>
         </nav>
-        <div class="header-presence" id="headerPresence">
+        <button class="header-presence" id="headerPresence" type="button" title="Clear live alert count">
           <span class="status-dot"></span>
           Live monitoring
-        </div>
+          <span id="live-alert-badge" class="live-alert-badge hidden">0</span>
+        </button>
         <a href="#/login" id="login-link" class="nav-link hidden">Login</a>
         <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme"></button>
         <button id="logout-btn" class="logout-btn hidden" aria-label="Logout">

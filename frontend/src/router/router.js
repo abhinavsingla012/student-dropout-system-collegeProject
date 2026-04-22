@@ -5,11 +5,13 @@ import { renderStudentDetail } from '../renderers/studentDetail.js';
 import { renderAnalytics }     from '../renderers/analytics.js';
 import { renderInterventions } from '../renderers/interventions.js';
 import { renderLogin }         from '../renderers/login.js';
+import { renderCounselors }     from '../renderers/counselors.js';
 
 export function renderPage() {
   const hash = window.location.hash || '#/home';
   const app  = document.getElementById('app');
   const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   // Public routes that don't need login
   const isLanding = hash === '#/home' || hash === '#/' || hash === '';
@@ -18,6 +20,12 @@ export function renderPage() {
   // Auth Guard: If not logged in and trying to access private page, go to login
   if (!token && !isLanding && !isLogin) {
     window.location.hash = '#/login';
+    return;
+  }
+
+  // Admin Guard for Counselors page
+  if (hash === '#/counselors' && user.role !== 'admin') {
+    window.location.hash = '#/dashboard';
     return;
   }
 
@@ -41,6 +49,7 @@ export function renderPage() {
   else if (hash === '#/students')           renderStudents();
   else if (hash === '#/interventions')      renderInterventions();
   else if (hash === '#/analytics')          renderAnalytics();
+  else if (hash === '#/counselors')         renderCounselors();
   else if (hash.startsWith('#/student/')) {
     const id = hash.split('/')[2];
     renderStudentDetail(id);

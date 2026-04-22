@@ -5,6 +5,7 @@ import {
   calculateDropoutProbability,
   generateRiskTrend
 } from '../utils/riskCalculator.js';
+import { handleUnauthorized } from './authSession.js';
 
 const API_BASE = 'http://localhost:3000/api';
 
@@ -32,6 +33,9 @@ export async function getAllStudents() {
   const res = await fetch(`${API_BASE}/students`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
+  if (handleUnauthorized(res)) {
+    throw new Error('Session expired. Please log in again.');
+  }
   if (!res.ok) throw new Error(`Failed to fetch students: ${res.statusText}`);
   const raw = await res.json();
   return raw.map(enrichStudent);
@@ -43,6 +47,9 @@ export async function getStudentById(id) {
   const res = await fetch(`${API_BASE}/students/${id}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
+  if (handleUnauthorized(res)) {
+    throw new Error('Session expired. Please log in again.');
+  }
   if (!res.ok) return null;
   const raw = await res.json();
   return enrichStudent(raw);

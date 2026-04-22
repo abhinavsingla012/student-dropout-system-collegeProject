@@ -230,7 +230,15 @@ async function renderDetail(app, student) {
       <div class="profile-header ${student.status}">
         <div class="profile-header-band"></div>
         <div class="profile-header-main">
-          <h1 class="profile-name">${escapeHtml(student.name)}</h1>
+          <div class="flex items-center gap-3 mb-2">
+            <h1 class="profile-name mb-0">${escapeHtml(student.name)}</h1>
+            ${(() => {
+              const user = JSON.parse(localStorage.getItem('user') || '{}');
+              return student.assignedCounselorId === user.id 
+                ? '<span class="assigned-badge-mini">Your Case</span>' 
+                : '';
+            })()}
+          </div>
           <div class="profile-meta">
             <span>Grade ${student.grade}</span>
             <span>${escapeHtml(capitalize(student.area))}</span>
@@ -238,6 +246,13 @@ async function renderDetail(app, student) {
             <span>${escapeHtml(capitalize(student.economicStatus))} income</span>
             <span>${student.distanceFromSchool} km from school</span>
             ${student.hasScholarship ? '<span class="badge-scholarship">Scholarship support active</span>' : ''}
+          </div>
+          
+          <div class="case-ownership-strip mt-6">
+            <span class="text-[10px] uppercase font-bold tracking-widest text-muted block mb-2">Case Ownership</span>
+            <div id="assignmentControl" class="flex items-center gap-3">
+              <div class="loading-spinner mini"></div>
+            </div>
           </div>
         </div>
         <div class="profile-risk-panel">
@@ -328,6 +343,67 @@ async function renderDetail(app, student) {
   `;
 
   renderTrendChart(student);
+
+  // --- Assignment Logic (Unit III: RBAC & Staff Management) ---
+  const assignmentControl = document.getElementById('assignmentControl');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const token = localStorage.getItem('token');
+
+  try {
+    // 1. Fetch Staff List
+    const staffRes = await fetch('http://localhost:3000/api/users/staff', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const staff = await staffRes.json();
+    const currentCounselor = staff.find(s => s.id === student.assignedCounselorId);
+
+    if (user.role === 'admin') {
+      assignmentControl.innerHTML = `
+        <select id="counselorSelect" class="filter-select" style="margin:0;">
+          <option value="">Unassigned</option>
+          ${staff.map(s => `<option value="${s.id}" ${s.id === student.assignedCounselorId ? 'selected' : ''}>${s.name}</option>`).join('')}
+        </select>
+        <button id="updateAssignment" class="ledger-button ledger-button-primary px-4">
+          Assign Case
+        </button>
+      `;
+
+      document.getElementById('updateAssignment').addEventListener('click', async () => {
+        const counselorId = document.getElementById('counselorSelect').value;
+        try {
+          const res = await fetch('http://localhost:3000/api/users/assign', {
+            method: 'PATCH',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ studentId: student.id, counselorId })
+          });
+          if (res.ok) {
+            alert('Case successfully reassigned!');
+            renderStudentDetail(student.id); // Refresh
+          }
+        } catch (err) {
+          alert('Failed to update assignment: ' + err.message);
+        }
+      });
+    } else {
+      // Counselor View: Read Only
+      assignmentControl.innerHTML = `
+        <div class="flex items-center gap-2">
+          <div class="staff-avatar" style="width:24px; height:24px; font-size:0.6rem;">
+            ${currentCounselor ? currentCounselor.name.charAt(0) : '?'}
+          </div>
+          <span class="text-sm font-medium">
+            ${currentCounselor ? (currentCounselor.id === user.id ? 'Assigned to You' : currentCounselor.name) : 'Unassigned'}
+          </span>
+        </div>
+      `;
+    }
+  } catch (err) {
+    assignmentControl.innerHTML = `<span class="text-xs text-red-400">Failed to load assignment data</span>`;
+  }
+  // --- End Assignment Logic ---
 
   document.getElementById('saveIntervention').addEventListener('click', async () => {
     const type = document.getElementById('interventionType').value;

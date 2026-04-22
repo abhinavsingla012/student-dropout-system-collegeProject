@@ -32,7 +32,7 @@ function buildRiskBadge(status) {
   `;
 }
 
-function buildRows(students) {
+function buildRows(students, currentUserId) {
   return students
     .map(
       student => `
@@ -41,7 +41,10 @@ function buildRows(students) {
             <button class="roster-student-button" data-student-id="${student.id}">
               <span class="roster-avatar">${escapeHtml(student.name.split(' ').map(part => part[0]).slice(0, 2).join(''))}</span>
               <span class="roster-student-meta">
-                <strong>${escapeHtml(student.name)}</strong>
+                <div class="flex items-center gap-2">
+                  <strong>${escapeHtml(student.name)}</strong>
+                  ${student.assignedCounselorId === currentUserId ? '<span class="assigned-badge-mini">Your Student</span>' : ''}
+                </div>
                 <span>${escapeHtml(student.area)} area · ${escapeHtml(student.economicStatus)} income</span>
               </span>
             </button>
@@ -78,6 +81,17 @@ function buildRows(students) {
         </tr>
       `
     )
+    .join('');
+}
+
+function buildMyRoster(students, currentUserId) {
+  const roster = students.filter((student) => student.assignedCounselorId === currentUserId);
+  if (!roster.length) {
+    return '<p class="text-xs text-muted">No students assigned yet.</p>';
+  }
+
+  return roster
+    .map((student) => `<button class="student-tag-btn" data-student-id="${student.id}">${escapeHtml(student.name)}</button>`)
     .join('');
 }
 
@@ -134,6 +148,7 @@ export async function renderStudents() {
 
   try {
     const all = await getAllStudents();
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     app.innerHTML = `
         <section class="page roster-page">
@@ -201,12 +216,27 @@ export async function renderStudents() {
                 </tr>
               </thead>
               <tbody id="studentTableBody">
-                ${buildRows(all)}
+                ${buildRows(all, user.id)}
               </tbody>
             </table>
           </section>
 
           <aside class="roster-side-column">
+            ${user.role === 'counselor' ? `
+              <article class="roster-my-students-card surface-card">
+                <div class="staff-card-header mb-4">
+                  <div class="staff-avatar" style="width:32px; height:32px; font-size: 0.8rem;">${user.name.charAt(0)}</div>
+                  <div>
+                    <h2 class="text-sm font-bold">My Roster</h2>
+                    <p class="text-[10px] text-muted uppercase">Assigned to you</p>
+                  </div>
+                </div>
+                <div class="student-mini-list">
+                  ${buildMyRoster(all, user.id)}
+                </div>
+              </article>
+            ` : ''}
+
             <article class="roster-insight-card">
               <span class="section-kicker">List Summary</span>
               <h2>Financial info</h2>
@@ -234,13 +264,19 @@ export async function renderStudents() {
     const ecoFilter = document.getElementById('ecoFilter');
 
     function attachRowHandlers() {
-      tableBody.querySelectorAll('[data-student-id]').forEach(element => {
+      tableBody.querySelectorAll('.roster-student-button, .roster-action-button').forEach(element => {
         element.addEventListener('click', () => {
           window.location.hash = `#/student/${element.dataset.studentId}`;
         });
       });
 
       priorityList.querySelectorAll('[data-student-id]').forEach(element => {
+        element.addEventListener('click', () => {
+          window.location.hash = `#/student/${element.dataset.studentId}`;
+        });
+      });
+
+      app.querySelectorAll('.student-tag-btn[data-student-id]').forEach(element => {
         element.addEventListener('click', () => {
           window.location.hash = `#/student/${element.dataset.studentId}`;
         });
@@ -268,7 +304,7 @@ export async function renderStudents() {
       rosterInsight.textContent = buildInsight(filtered);
       priorityList.innerHTML = buildPriorityList(filtered.length ? filtered : all);
       tableBody.innerHTML = filtered.length
-        ? buildRows(filtered)
+        ? buildRows(filtered, user.id)
         : `
           <tr>
             <td colspan="7">

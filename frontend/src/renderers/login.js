@@ -21,7 +21,7 @@ export function renderLogin() {
             <div class="px-10 pt-12 pb-10">
               <header class="text-center space-y-2 mb-10">
                 <h1 class="text-3xl font-black tracking-tighter text-slate-900 dark:text-[#dae2fd] font-sans">Sign In</h1>
-                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Institutional access to SDAS Terminal</p>
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Institutional access for Admins & Counselors</p>
               </header>
 
               <form id="loginForm" class="space-y-6" autocomplete="off">

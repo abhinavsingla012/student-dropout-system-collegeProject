@@ -1,4 +1,5 @@
 const API_BASE = 'http://localhost:3000/api';
+import { handleUnauthorized } from './authSession.js';
 
 // ── Save a new intervention via POST ──
 export async function saveIntervention({ studentId, studentName, type, note }) {
@@ -11,6 +12,10 @@ export async function saveIntervention({ studentId, studentName, type, note }) {
     },
     body: JSON.stringify({ studentId, studentName, type, note }),
   });
+
+  if (handleUnauthorized(res)) {
+    throw new Error('Session expired. Please log in again.');
+  }
 
   if (!res.ok) {
     // Try to parse the error message from the backend (Unit II: express-validator)
@@ -35,6 +40,9 @@ export async function getInterventionsForStudent(studentId) {
   const res = await fetch(`${API_BASE}/interventions?studentId=${studentId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
+  if (handleUnauthorized(res)) {
+    throw new Error('Session expired. Please log in again.');
+  }
   if (!res.ok) throw new Error(`Failed to fetch interventions: ${res.statusText}`);
   return res.json();
 }
@@ -45,6 +53,9 @@ export async function getAllInterventions() {
   const res = await fetch(`${API_BASE}/interventions`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
+  if (handleUnauthorized(res)) {
+    throw new Error('Session expired. Please log in again.');
+  }
   if (!res.ok) throw new Error(`Failed to fetch interventions: ${res.statusText}`);
   return res.json();
 }
