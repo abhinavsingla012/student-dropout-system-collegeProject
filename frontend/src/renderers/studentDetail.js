@@ -4,6 +4,8 @@ import { getStudentById } from '../services/studentService.js';
 import { getInterventionsForStudent, saveIntervention } from '../services/interventionService.js';
 import { API_BASE_URL } from '../config/api.js';
 
+const STUDENT_DETAIL_STATE_PREFIX = 'studentDetailPageState:';
+
 const TYPE_LABEL = {
   counselling: 'Counselling Session',
   parent_meeting: 'Parent Meeting',
@@ -27,6 +29,31 @@ function escapeHtml(value) {
 
 function capitalize(value) {
   return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+}
+
+function getStudentDetailStateKey(studentId) {
+  return `${STUDENT_DETAIL_STATE_PREFIX}${studentId}`;
+}
+
+function loadStudentDetailState(studentId) {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(getStudentDetailStateKey(studentId)) || '{}');
+    return {
+      selectedType: typeof saved.selectedType === 'string' ? saved.selectedType : '',
+      note: typeof saved.note === 'string' ? saved.note : '',
+      counselorId: typeof saved.counselorId === 'string' ? saved.counselorId : '',
+    };
+  } catch {
+    return {
+      selectedType: '',
+      note: '',
+      counselorId: '',
+    };
+  }
+}
+
+function saveStudentDetailState(studentId, state) {
+  sessionStorage.setItem(getStudentDetailStateKey(studentId), JSON.stringify(state));
 }
 
 function buildActionPlan(student, interventions) {
@@ -210,6 +237,7 @@ export async function renderStudentDetail(id) {
 async function renderDetail(app, student) {
   const interventions = await getInterventionsForStudent(student.id);
   const actionPlan = buildActionPlan(student, interventions);
+  const savedState = loadStudentDetailState(student.id);
   const intensityLabel =
     student.status === 'high'
       ? 'Immediate intervention required'
@@ -333,7 +361,7 @@ async function renderDetail(app, student) {
             </div>
             <div class="form-group">
               <label for="interventionNote">Case note</label>
-              <textarea id="interventionNote" placeholder="Record the action taken, response from student or parent, and the next follow-up step."></textarea>
+              <textarea id="interventionNote" placeholder="Record the action taken, response from student or parent, and the next follow-up step.">${escapeHtml(savedState.note)}</textarea>
             </div>
             <button class="btn btn-primary" id="saveIntervention">Save Intervention</button>
             <div id="formMessage"></div>
@@ -349,6 +377,24 @@ async function renderDetail(app, student) {
   const assignmentControl = document.getElementById('assignmentControl');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const token = localStorage.getItem('token');
+  const interventionTypeSelect = document.getElementById('interventionType');
+  const interventionNoteInput = document.getElementById('interventionNote');
+
+  function persistDetailState(overrides = {}) {
+    saveStudentDetailState(student.id, {
+      selectedType: overrides.selectedType ?? interventionTypeSelect.value,
+      note: overrides.note ?? interventionNoteInput.value,
+      counselorId: overrides.counselorId ?? document.getElementById('counselorSelect')?.value ?? savedState.counselorId ?? '',
+    });
+  }
+
+  if (Array.from(interventionTypeSelect.options).some(option => option.value === savedState.selectedType)) {
+    interventionTypeSelect.value = savedState.selectedType;
+  }
+
+  interventionTypeSelect.addEventListener('change', () => persistDetailState());
+  interventionNoteInput.addEventListener('input', () => persistDetailState());
+  persistDetailState();
 
   try {
     // 1. Fetch Staff List
@@ -369,6 +415,14 @@ async function renderDetail(app, student) {
         </button>
       `;
 
+      const counselorSelect = document.getElementById('counselorSelect');
+      if (savedState.counselorId && Array.from(counselorSelect.options).some(option => option.value === savedState.counselorId)) {
+        counselorSelect.value = savedState.counselorId;
+      }
+      counselorSelect.addEventListener('change', () => {
+        persistDetailState({ counselorId: counselorSelect.value });
+      });
+
       document.getElementById('updateAssignment').addEventListener('click', async () => {
         const counselorId = document.getElementById('counselorSelect').value;
         try {
@@ -382,6 +436,7 @@ async function renderDetail(app, student) {
           });
           if (res.ok) {
             alert('Case successfully reassigned!');
+            persistDetailState({ counselorId });
             renderStudentDetail(student.id); // Refresh
           }
         } catch (err) {
@@ -407,8 +462,8 @@ async function renderDetail(app, student) {
   // --- End Assignment Logic ---
 
   document.getElementById('saveIntervention').addEventListener('click', async () => {
-    const type = document.getElementById('interventionType').value;
-    const note = document.getElementById('interventionNote').value.trim();
+    const type = interventionTypeSelect.value;
+    const note = interventionNoteInput.value.trim();
     const message = document.getElementById('formMessage');
 
     if (!type || !note) {
@@ -422,6 +477,11 @@ async function renderDetail(app, student) {
         studentName: student.name,
         type,
         note,
+      });
+      saveStudentDetailState(student.id, {
+        selectedType: type,
+        note: '',
+        counselorId: document.getElementById('counselorSelect')?.value ?? savedState.counselorId ?? '',
       });
       await renderDetail(app, student);
     } catch (error) {

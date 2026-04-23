@@ -17,11 +17,14 @@ import {
   topFactors,
 } from '../utils/analyticsEngine.js';
 
+const ANALYTICS_STATE_KEY = 'analyticsPageState';
+
 let state = {
   all: [],
   filters: { area: 'all', economicStatus: 'all', riskLevel: 'all' },
   charts: {},
   drillDown: null,
+  simulatorValue: 0,
 };
 
 function getTheme() {
@@ -82,6 +85,41 @@ function escapeHtml(value) {
     };
     return map[character];
   });
+}
+
+function loadSavedAnalyticsState() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(ANALYTICS_STATE_KEY) || '{}');
+    return {
+      filters: {
+        area: typeof saved.filters?.area === 'string' ? saved.filters.area : 'all',
+        economicStatus: typeof saved.filters?.economicStatus === 'string' ? saved.filters.economicStatus : 'all',
+        riskLevel: typeof saved.filters?.riskLevel === 'string' ? saved.filters.riskLevel : 'all',
+      },
+      drillDown:
+        saved.drillDown && typeof saved.drillDown.type === 'string' && typeof saved.drillDown.value === 'string'
+          ? saved.drillDown
+          : null,
+      simulatorValue: Number.isFinite(saved.simulatorValue) ? Math.max(0, Math.min(30, saved.simulatorValue)) : 0,
+    };
+  } catch {
+    return {
+      filters: { area: 'all', economicStatus: 'all', riskLevel: 'all' },
+      drillDown: null,
+      simulatorValue: 0,
+    };
+  }
+}
+
+function persistAnalyticsState() {
+  sessionStorage.setItem(
+    ANALYTICS_STATE_KEY,
+    JSON.stringify({
+      filters: state.filters,
+      drillDown: state.drillDown,
+      simulatorValue: state.simulatorValue,
+    })
+  );
 }
 
 function destroyCharts() {
@@ -271,6 +309,8 @@ function updateSimulator() {
   if (!slider) return;
 
   const value = parseInt(slider.value, 10);
+  state.simulatorValue = value;
+  persistAnalyticsState();
   const data = getFiltered();
   const { before, after } = simulateAttendance(data, value);
   const total = before.total || 1;
@@ -311,6 +351,7 @@ function setDrillDown(type, value) {
   } else {
     state.drillDown = { type, value };
   }
+  persistAnalyticsState();
   updateAllCharts();
 }
 
@@ -326,6 +367,7 @@ function updateDrillBanner() {
     root.classList.add('active');
     document.getElementById('drillExit')?.addEventListener('click', () => {
       state.drillDown = null;
+      persistAnalyticsState();
       updateAllCharts();
     });
   } else {
@@ -750,6 +792,7 @@ function updateAllCharts() {
 }
 
 function onFilterChange() {
+  persistAnalyticsState();
   destroyCharts();
   updateAllCharts();
 }
@@ -767,8 +810,10 @@ export async function renderAnalytics() {
 
   try {
     state.all = await getAllStudents();
-    state.filters = { area: 'all', economicStatus: 'all', riskLevel: 'all' };
-    state.drillDown = null;
+    const savedState = loadSavedAnalyticsState();
+    state.filters = savedState.filters;
+    state.drillDown = savedState.drillDown;
+    state.simulatorValue = savedState.simulatorValue;
     destroyCharts();
 
     const areas = [...new Set(state.all.map(student => student.area))];
@@ -945,13 +990,20 @@ export async function renderAnalytics() {
     document.getElementById('resetFilters')?.addEventListener('click', () => {
       state.filters = { area: 'all', economicStatus: 'all', riskLevel: 'all' };
       state.drillDown = null;
+      state.simulatorValue = 0;
+      document.getElementById('simSlider').value = '0';
       syncFilterUI();
       onFilterChange();
     });
 
-    document.getElementById('simSlider')?.addEventListener('input', updateSimulator);
+    const simSlider = document.getElementById('simSlider');
+    if (simSlider) {
+      simSlider.value = String(state.simulatorValue);
+      simSlider.addEventListener('input', updateSimulator);
+    }
 
     syncFilterUI();
+    persistAnalyticsState();
     updateAllCharts();
   } catch (error) {
     app.innerHTML = `

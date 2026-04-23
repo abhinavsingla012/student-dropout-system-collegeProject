@@ -1,5 +1,7 @@
 import { getAllStudents } from '../services/studentService.js';
 
+const STUDENT_FILTERS_KEY = 'studentsPageFilters';
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, character => {
     const map = {
@@ -136,6 +138,29 @@ function buildInsight(filtered) {
   return 'The current list selection is relatively stable. Continue preventive monitoring and keep follow-up notes current for medium-risk students.';
 }
 
+function loadSavedFilters() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(STUDENT_FILTERS_KEY) || '{}');
+    return {
+      search: typeof saved.search === 'string' ? saved.search : '',
+      risk: typeof saved.risk === 'string' ? saved.risk : 'all',
+      area: typeof saved.area === 'string' ? saved.area : 'all',
+      eco: typeof saved.eco === 'string' ? saved.eco : 'all',
+    };
+  } catch {
+    return {
+      search: '',
+      risk: 'all',
+      area: 'all',
+      eco: 'all',
+    };
+  }
+}
+
+function saveFilters(filters) {
+  sessionStorage.setItem(STUDENT_FILTERS_KEY, JSON.stringify(filters));
+}
+
 export async function renderStudents() {
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -262,6 +287,12 @@ export async function renderStudents() {
     const riskFilter = document.getElementById('riskFilter');
     const areaFilter = document.getElementById('areaFilter');
     const ecoFilter = document.getElementById('ecoFilter');
+    const savedFilters = loadSavedFilters();
+
+    searchInput.value = savedFilters.search;
+    riskFilter.value = savedFilters.risk;
+    areaFilter.value = savedFilters.area;
+    ecoFilter.value = savedFilters.eco;
 
     function attachRowHandlers() {
       tableBody.querySelectorAll('.roster-student-button, .roster-action-button').forEach(element => {
@@ -288,6 +319,13 @@ export async function renderStudents() {
       const area = areaFilter.value;
       const search = searchInput.value.trim().toLowerCase();
       const eco = ecoFilter.value;
+
+      saveFilters({
+        search: searchInput.value.trim(),
+        risk: status,
+        area,
+        eco,
+      });
 
       let filtered = all.filter(student => {
         const matchStatus = status === 'all' || student.status === status;
@@ -331,6 +369,7 @@ export async function renderStudents() {
     });
 
     attachRowHandlers();
+    applyFilters();
   } catch (err) {
     app.innerHTML = `
       <section class="page">

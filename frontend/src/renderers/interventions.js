@@ -2,6 +2,8 @@ import { interventionPriorities } from '../utils/analyticsEngine.js';
 import { getAllStudents } from '../services/studentService.js';
 import { getAllInterventions, saveIntervention } from '../services/interventionService.js';
 
+const INTERVENTIONS_STATE_KEY = 'interventionsPageState';
+
 const TYPE_LABEL = {
   counselling: 'Counselling Session',
   parent_meeting: 'Parent Meeting',
@@ -150,6 +152,34 @@ function buildSelectionSummary(student) {
   `;
 }
 
+function loadSavedInterventionState() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(INTERVENTIONS_STATE_KEY) || '{}');
+    return {
+      selectedStudentId: Number.isFinite(saved.selectedStudentId) ? saved.selectedStudentId : null,
+      selectedType: typeof saved.selectedType === 'string' ? saved.selectedType : '',
+      note: typeof saved.note === 'string' ? saved.note : '',
+    };
+  } catch {
+    return {
+      selectedStudentId: null,
+      selectedType: '',
+      note: '',
+    };
+  }
+}
+
+function saveInterventionPageState({ selectedStudentId, selectedType, note }) {
+  sessionStorage.setItem(
+    INTERVENTIONS_STATE_KEY,
+    JSON.stringify({
+      selectedStudentId,
+      selectedType,
+      note,
+    })
+  );
+}
+
 export async function renderInterventions() {
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -174,6 +204,11 @@ export async function renderInterventions() {
       label,
       count: allInterventions.filter(intervention => intervention.type === type).length,
     }));
+    const savedState = loadSavedInterventionState();
+    const initialStudent =
+      students.find(student => student.id === savedState.selectedStudentId) ||
+      priorityQueue[0] ||
+      null;
 
     app.innerHTML = `
       <section class="page">
@@ -226,7 +261,7 @@ export async function renderInterventions() {
 
           <div class="detail-section">
             <h2 class="section-heading">Log Targeted Intervention</h2>
-            <div id="selectionSummary">${buildSelectionSummary(priorityQueue[0] || null)}</div>
+            <div id="selectionSummary">${buildSelectionSummary(initialStudent)}</div>
             <div class="form-card">
               <div class="form-group">
                 <label for="studentSelect">Student</label>
@@ -235,7 +270,7 @@ export async function renderInterventions() {
                   ${students
                     .slice()
                     .sort((a, b) => b.riskScore - a.riskScore)
-                    .map(student => `<option value="${student.id}" ${student.id === priorityQueue[0]?.id ? 'selected' : ''}>${escapeHtml(student.name)} - ${escapeHtml(student.status)} risk (${student.riskScore})</option>`)
+                    .map(student => `<option value="${student.id}" ${student.id === initialStudent?.id ? 'selected' : ''}>${escapeHtml(student.name)} - ${escapeHtml(student.status)} risk (${student.riskScore})</option>`)
                     .join('')}
                 </select>
               </div>
@@ -243,12 +278,12 @@ export async function renderInterventions() {
                 <label for="interventionType">Intervention Type</label>
                 <select id="interventionType">
                   <option value="">Select intervention type</option>
-                  ${buildTypeOptions(priorityQueue[0] ? getStudentRecommendations(priorityQueue[0]) : ['counselling'])}
+                  ${buildTypeOptions(initialStudent ? getStudentRecommendations(initialStudent) : ['counselling'])}
                 </select>
               </div>
               <div class="form-group">
                 <label for="interventionNote">Case Note</label>
-                <textarea id="interventionNote" placeholder="Describe the action taken, stakeholder response, and next follow-up step."></textarea>
+                <textarea id="interventionNote" placeholder="Describe the action taken, stakeholder response, and next follow-up step.">${escapeHtml(savedState.note)}</textarea>
               </div>
               <button class="btn btn-primary" id="submitIntervention">Save Intervention</button>
               <div id="formMessage"></div>
@@ -292,7 +327,7 @@ export async function renderInterventions() {
       </section>
     `;
 
-    let selectedStudent = priorityQueue[0] || null;
+    let selectedStudent = initialStudent;
 
     const studentSelect = document.getElementById('studentSelect');
     const typeSelect = document.getElementById('interventionType');
@@ -300,16 +335,37 @@ export async function renderInterventions() {
     const summaryRoot = document.getElementById('selectionSummary');
     const queueRoot = document.getElementById('priorityQueue');
 
+    function persistPageState() {
+      saveInterventionPageState({
+        selectedStudentId: selectedStudent?.id ?? null,
+        selectedType: typeSelect.value,
+        note: noteInput.value,
+      });
+    }
+
     function syncSelectedStudent(student) {
       selectedStudent = student;
       summaryRoot.innerHTML = buildSelectionSummary(student);
+      const currentType = typeSelect.value;
       typeSelect.innerHTML = `
         <option value="">Select intervention type</option>
         ${buildTypeOptions(student ? getStudentRecommendations(student) : ['counselling'])}
       `;
       if (student) {
         studentSelect.value = String(student.id);
+      } else {
+        studentSelect.value = '';
       }
+      const availableTypes = Array.from(typeSelect.options).map(option => option.value);
+      const preferredType = availableTypes.includes(currentType)
+        ? currentType
+        : availableTypes.includes(savedState.selectedType)
+          ? savedState.selectedType
+          : typeSelect.value;
+      if (preferredType) {
+        typeSelect.value = preferredType;
+      }
+      persistPageState();
     }
 
     queueRoot.querySelectorAll('.queue-card').forEach(card => {
@@ -323,6 +379,14 @@ export async function renderInterventions() {
       const student = students.find(entry => entry.id === Number(event.target.value));
       syncSelectedStudent(student || null);
     });
+
+    typeSelect.value = Array.from(typeSelect.options).some(option => option.value === savedState.selectedType)
+      ? savedState.selectedType
+      : typeSelect.value;
+
+    typeSelect.addEventListener('change', persistPageState);
+    noteInput.addEventListener('input', persistPageState);
+    persistPageState();
 
     document.getElementById('submitIntervention').addEventListener('click', async () => {
       const studentId = studentSelect.value;
@@ -349,6 +413,7 @@ export async function renderInterventions() {
         message.innerHTML = '<div class="form-message success">Intervention saved successfully.</div>';
         noteInput.value = '';
         syncSelectedStudent(student);
+        persistPageState();
       } catch (error) {
         message.innerHTML = `<div class="form-message error">Failed to save intervention: ${escapeHtml(error.message)}</div>`;
       }
