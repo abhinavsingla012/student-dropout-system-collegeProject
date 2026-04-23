@@ -197,6 +197,18 @@ body::before {
 .dot-pulse { width: 6px; height: 6px; background: var(--accent-green); border-radius: 50%; box-shadow: 0 0 10px var(--accent-green); animation: pulseGreen 2s infinite; }
 @keyframes pulseGreen { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
+body.light-mode .status-pill {
+  background: rgba(255, 255, 255, 0.68);
+  border-color: rgba(68, 97, 127, 0.16);
+  color: #172839;
+  box-shadow: 0 10px 24px rgba(68, 97, 127, 0.1);
+  backdrop-filter: blur(14px);
+}
+
+body.light-mode .status-pill .dot-pulse {
+  box-shadow: 0 0 0 4px rgba(15, 123, 56, 0.12), 0 0 10px rgba(15, 123, 56, 0.24);
+}
+
 /* ── Risk Distribution Chart ── */
 .chart-widget .widget-head { margin-bottom: 2rem; }
 .widget-title { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
