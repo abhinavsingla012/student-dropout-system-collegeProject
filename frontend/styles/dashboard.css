@@ -1214,6 +1214,21 @@ body.light-mode .alert-widget .widget-title { color: #000000 !important; } /* Pu
 .btn-primary { background: linear-gradient(90deg, #818cf8, #38bdf8, #fb7185, #818cf8); background-size: 300% 100%; animation: gradientFlow 4s ease infinite; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 4px 12px rgba(129, 140, 248, 0.2); }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(129, 140, 248, 0.5); filter: brightness(1.1); }
 
+body.light-mode .btn-primary {
+  background: linear-gradient(135deg, #eef4ff 0%, #dbeafe 55%, #fce7f3 100%);
+  color: #172839;
+  border: 1px solid rgba(68, 97, 127, 0.18);
+  box-shadow: 0 10px 24px rgba(68, 97, 127, 0.12);
+  animation: none;
+}
+
+body.light-mode .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(68, 97, 127, 0.16);
+  filter: none;
+  border-color: rgba(68, 97, 127, 0.28);
+}
+
 /* Error / Empty state hints */
 .text-danger { color: var(--accent-red) !important; }
 
