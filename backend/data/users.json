@@ -7,6 +7,13 @@
     "role": "admin"
   },
   {
+    "id": 4,
+    "name": "Super Admin",
+    "email": "superadmin@sdas.com",
+    "password": "$2b$10$Pmxqd7s0A8wOOZQ2vGAQDOoVYeC3PQTj78Zltv/4/7NqIQJliJXfi",
+    "role": "admin"
+  },
+  {
     "id": 2,
     "name": "Rahul Sharma",
     "email": "rahul@sdas.com",
