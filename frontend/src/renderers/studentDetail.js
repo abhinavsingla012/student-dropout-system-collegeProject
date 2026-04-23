@@ -2,6 +2,7 @@ import Chart from 'chart.js/auto';
 import { getDriverMatches } from '../utils/analyticsEngine.js';
 import { getStudentById } from '../services/studentService.js';
 import { getInterventionsForStudent, saveIntervention } from '../services/interventionService.js';
+import { API_BASE_URL } from '../config/api.js';
 
 const TYPE_LABEL = {
   counselling: 'Counselling Session',
@@ -351,7 +352,7 @@ async function renderDetail(app, student) {
 
   try {
     // 1. Fetch Staff List
-    const staffRes = await fetch('http://localhost:3000/api/users/staff', {
+    const staffRes = await fetch(`${API_BASE_URL}/users/staff`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     const staff = await staffRes.json();
@@ -371,7 +372,7 @@ async function renderDetail(app, student) {
       document.getElementById('updateAssignment').addEventListener('click', async () => {
         const counselorId = document.getElementById('counselorSelect').value;
         try {
-          const res = await fetch('http://localhost:3000/api/users/assign', {
+          const res = await fetch(`${API_BASE_URL}/users/assign`, {
             method: 'PATCH',
             headers: { 
               'Content-Type': 'application/json',

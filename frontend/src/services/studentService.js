@@ -6,8 +6,9 @@ import {
   generateRiskTrend
 } from '../utils/riskCalculator.js';
 import { handleUnauthorized } from './authSession.js';
+import { API_BASE_URL } from '../config/api.js';
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = API_BASE_URL;
 
 // ── Enrich a raw student object with computed risk data ──
 export function enrichStudent(student) {

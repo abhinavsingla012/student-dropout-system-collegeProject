@@ -1,5 +1,7 @@
-const API_BASE = 'http://localhost:3000/api';
 import { handleUnauthorized } from './authSession.js';
+import { API_BASE_URL } from '../config/api.js';
+
+const API_BASE = API_BASE_URL;
 
 // ── Save a new intervention via POST ──
 export async function saveIntervention({ studentId, studentName, type, note }) {

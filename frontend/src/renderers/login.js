@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../config/api.js';
+
 export function renderLogin() {
   const app = document.getElementById('app');
   
@@ -91,7 +93,7 @@ export function renderLogin() {
     const password = document.getElementById('password').value;
 
     try {
-      const res = await fetch('http://localhost:3000/api/auth/login', {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

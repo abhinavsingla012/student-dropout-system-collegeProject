@@ -1,5 +1,6 @@
 import { getAllStudents } from '../services/studentService.js';
 import { handleUnauthorized } from '../services/authSession.js';
+import { API_BASE_URL } from '../config/api.js';
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (character) => {
@@ -38,7 +39,7 @@ export async function renderCounselors() {
       return;
     }
 
-    const staffRes = await fetch('http://localhost:3000/api/users/staff', {
+    const staffRes = await fetch(`${API_BASE_URL}/users/staff`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (handleUnauthorized(staffRes)) return;
@@ -143,7 +144,7 @@ export async function renderCounselors() {
         button.textContent = 'Assigning...';
 
         try {
-          const res = await fetch('http://localhost:3000/api/users/assign', {
+          const res = await fetch(`${API_BASE_URL}/users/assign`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
