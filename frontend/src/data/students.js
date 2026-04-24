@@ -1,6 +1,4 @@
-// ─────────────────────────────────────────────
-// Random Student Generator (180 students)
-// ─────────────────────────────────────────────
+
 
 const FIRST_NAMES = [
   "Aarav","Vivaan","Aditya","Vihaan","Arjun","Sai","Reyansh","Krishna",

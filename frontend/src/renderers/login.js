@@ -2,6 +2,7 @@ import { API_BASE_URL } from '../config/api.js';
 
 export function renderLogin() {
   const app = document.getElementById('app');
+  app.classList.add('full-width');
   
   // Hide global header/footer for the login page
   document.getElementById('appHeader')?.classList.add('hidden');

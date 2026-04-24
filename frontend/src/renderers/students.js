@@ -158,7 +158,7 @@ function loadSavedFilters() {
 }
 
 function saveFilters(filters) {
-  sessionStorage.setItem(STUDENT_FILTERS_KEY, JSON.stringify(filters));
+   sessionStorage.setItem(STUDENT_FILTERS_KEY, JSON.stringify(filters));
 }
 
 export async function renderStudents() {
