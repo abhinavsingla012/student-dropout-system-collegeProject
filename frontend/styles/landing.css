@@ -454,18 +454,27 @@ body:not(.light-mode) .landing-cta-band {
   }
 
   .ledger-button {
-    width: 100%;
+    width: auto;
     min-width: 0;
+    flex: 0 1 220px;
   }
 
   .ledger-proof-strip,
   .ledger-kpi-grid,
   .landing-feature-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .ledger-proof-item,
+  .ledger-kpi-card,
+  .landing-feature {
+    flex: 0 1 min(100%, 240px);
   }
 
   .landing-feature-wide {
-    grid-column: span 1;
+    grid-column: auto;
   }
 
   .ledger-panel-top,
@@ -497,6 +506,7 @@ body:not(.light-mode) .landing-cta-band {
 
   .ledger-hero-actions,
   .landing-cta-actions {
+    justify-content: flex-start;
     gap: 0.75rem;
     margin-top: 1.35rem;
   }
@@ -529,5 +539,17 @@ body:not(.light-mode) .landing-cta-band {
 
   .landing-section-head {
     margin-bottom: 1.25rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .ledger-button {
+    flex-basis: 100%;
+  }
+
+  .ledger-proof-item,
+  .ledger-kpi-card,
+  .landing-feature {
+    flex-basis: 100%;
   }
 }

@@ -1960,14 +1960,42 @@ body:not(.light-mode) .roster-insight-card {
     width: 100%;
   }
 
+  .roster-toolbar-leading {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+    scrollbar-width: none;
+  }
+
+  .roster-toolbar-leading::-webkit-scrollbar {
+    display: none;
+  }
+
   .filter-input,
   .filter-select {
-    width: 100%;
+    width: auto;
     min-width: 0;
+    flex: 0 0 210px;
+  }
+
+  .filter-select {
+    flex-basis: 150px;
+  }
+
+  .roster-top-metrics {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .roster-top-metrics::-webkit-scrollbar {
+    display: none;
   }
 
   .roster-mini-metric {
-    min-width: 0;
+    flex: 0 0 180px;
+    min-width: 180px;
   }
 
   .roster-side-column {
@@ -1987,6 +2015,16 @@ body:not(.light-mode) .roster-insight-card {
   .staff-role-badge {
     margin-left: 0;
   }
+
+  .counselor-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .staff-card {
+    flex: 0 1 min(100%, 340px);
+  }
 }
 
 @media (max-width: 560px) {
@@ -2000,7 +2038,17 @@ body:not(.light-mode) .roster-insight-card {
   .metrics-grid,
   .metrics-grid-expanded,
   .staff-stats {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .dashboard-ribbon-card,
+  .asummary-item,
+  .metric-card,
+  .stat-item {
+    flex: 0 1 calc(50% - 0.5rem);
+    min-width: 145px;
   }
 
   .dashboard-ribbon-card,
@@ -2061,8 +2109,22 @@ body:not(.light-mode) .roster-insight-card {
     border-spacing: 0 0.85rem;
   }
 
+  .roster-table tbody {
+    display: flex;
+    gap: 0.85rem;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+    scrollbar-width: none;
+  }
+
+  .roster-table tbody::-webkit-scrollbar {
+    display: none;
+  }
+
   .roster-row {
     display: block;
+    flex: 0 0 min(86vw, 320px);
+    width: auto;
     border: 1px solid var(--card-border);
     border-radius: 20px;
     background: color-mix(in srgb, var(--bg-raised) 88%, transparent);

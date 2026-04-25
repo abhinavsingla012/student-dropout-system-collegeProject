@@ -643,21 +643,29 @@ textarea {
   .app-header {
     height: auto;
     padding: 1rem;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.8rem;
   }
 
   .header-actions {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    min-width: 0;
+    flex: 1;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
   }
 
   .app-nav {
+    min-width: 0;
     max-width: 100%;
+    flex: 1 1 auto;
     overflow-x: auto;
     white-space: nowrap;
+    scrollbar-width: none;
+  }
+
+  .app-nav::-webkit-scrollbar {
+    display: none;
   }
 }
 
@@ -676,8 +684,8 @@ textarea {
   }
 
   .app-nav {
-    width: 100%;
-    order: 3;
+    width: auto;
+    order: 0;
   }
 
   .nav-link {
@@ -742,6 +750,10 @@ textarea {
   .nav-link {
     padding: 0.5rem 0.7rem;
     font-size: 0.64rem;
+  }
+
+  .brand-tag {
+    display: none;
   }
 
   .app-main {
