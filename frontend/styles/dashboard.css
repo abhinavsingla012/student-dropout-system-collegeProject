@@ -1723,7 +1723,7 @@ body:not(.light-mode) .roster-insight-card {
 /* Staff Management Styles */
 .counselor-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
   margin-top: 1.5rem;
 }
@@ -1930,6 +1930,195 @@ body:not(.light-mode) .roster-insight-card {
   }
 
   .assign-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .interventions-layout {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .interventions-layout > div:first-child {
+    position: static;
+    top: auto;
+  }
+}
+
+@media (max-width: 820px) {
+  .dashboard-briefing-band,
+  .dashboard-panel,
+  .dashboard-ribbon-card,
+  .detail-section,
+  .profile-header {
+    padding: 1.15rem;
+  }
+
+  .roster-toolbar-leading,
+  .roster-toolbar-trailing {
+    width: 100%;
+  }
+
+  .filter-input,
+  .filter-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .roster-mini-metric {
+    min-width: 0;
+  }
+
+  .roster-side-column {
+    position: static;
+    top: auto;
+  }
+
+  .staff-card-header,
+  .workload-label-row {
+    align-items: flex-start;
+  }
+
+  .staff-card-header {
+    flex-wrap: wrap;
+  }
+
+  .staff-role-badge {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboard-briefing-main h2 {
+    font-size: 1.35rem;
+  }
+
+  .dashboard-metric-ribbon,
+  .analytics-summary,
+  .analytics-summary-expanded,
+  .metrics-grid,
+  .metrics-grid-expanded,
+  .staff-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-ribbon-card,
+  .dashboard-brief-stat,
+  .hero-secondary-card,
+  .metric-card,
+  .roster-insight-card,
+  .roster-priority-card,
+  .staff-card,
+  .manage-assignment-box,
+  .roster-my-students-card {
+    padding: 1rem;
+  }
+
+  .dashboard-ribbon-value,
+  .risk-score-big,
+  .profile-name {
+    font-size: 1.9rem;
+  }
+
+  .status-pill,
+  .dashboard-driver-card,
+  .dashboard-watch-item,
+  .alert-card,
+  .intervention-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .roster-toolbar {
+    padding: 0.9rem;
+  }
+
+  .roster-student-button {
+    width: 100%;
+  }
+
+  .roster-table,
+  .roster-table tbody,
+  .roster-table tr,
+  .roster-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .roster-table thead {
+    display: none;
+  }
+
+  .roster-table-shell {
+    overflow: visible;
+    max-height: none;
+  }
+
+  .roster-table {
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0 0.85rem;
+  }
+
+  .roster-row {
+    display: block;
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--bg-raised) 88%, transparent);
+    overflow: hidden;
+  }
+
+  .roster-row:hover {
+    background: color-mix(in srgb, var(--bg-raised) 92%, transparent);
+  }
+
+  .roster-row.high:hover,
+  .roster-row.medium:hover,
+  .roster-row.low:hover {
+    background: color-mix(in srgb, var(--bg-raised) 92%, transparent);
+  }
+
+  .roster-cell {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--card-border);
+  }
+
+  .roster-cell:last-child {
+    border-bottom: none;
+  }
+
+  .roster-cell::before {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: var(--text-muted);
+    font-family: var(--fl);
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    content: "";
+  }
+
+  .roster-cell:nth-child(1)::before { content: "Student"; }
+  .roster-cell:nth-child(2)::before { content: "Grade / ID"; }
+  .roster-cell:nth-child(3)::before { content: "GPA"; }
+  .roster-cell:nth-child(4)::before { content: "Attendance"; }
+  .roster-cell:nth-child(5)::before { content: "Risk Level"; }
+  .roster-cell:nth-child(6)::before { content: "Risk Score"; }
+  .roster-cell:nth-child(7)::before { content: "Action"; }
+
+  .roster-student-button {
+    align-items: flex-start;
+  }
+
+  .roster-attendance-cell,
+  .roster-actions {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .roster-action-button {
     width: 100%;
   }
 }

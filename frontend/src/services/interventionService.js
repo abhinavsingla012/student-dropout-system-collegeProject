@@ -20,7 +20,7 @@ export async function saveIntervention({ studentId, studentName, type, note }) {
   }
 
   if (!res.ok) {
-    // Try to parse the error message from the backend (Unit II: express-validator)
+    
     let errorMessage = res.statusText;
     try {
       const errorData = await res.json();

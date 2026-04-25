@@ -649,11 +649,13 @@ textarea {
   }
 
   .header-actions {
+    width: 100%;
     flex-wrap: wrap;
     justify-content: space-between;
   }
 
   .app-nav {
+    max-width: 100%;
     overflow-x: auto;
     white-space: nowrap;
   }
@@ -662,6 +664,25 @@ textarea {
 @media (max-width: 768px) {
   .app-main {
     padding: 1.1rem;
+  }
+
+  .app-header {
+    padding: 0.9rem 1rem 1rem;
+  }
+
+  .header-actions {
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .app-nav {
+    width: 100%;
+    order: 3;
+  }
+
+  .nav-link {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.68rem;
   }
 
   .footer-content {
@@ -683,5 +704,55 @@ textarea {
 
   .header-presence {
     display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-header {
+    padding: 0.85rem 0.85rem 0.95rem;
+  }
+
+  .header-brand {
+    gap: 0.7rem;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand-name {
+    font-size: 0.88rem;
+  }
+
+  .brand-tag {
+    font-size: 0.56rem;
+    letter-spacing: 0.1em;
+  }
+
+  .header-actions {
+    gap: 0.6rem;
+  }
+
+  .app-nav {
+    padding: 0.25rem;
+    gap: 0.2rem;
+  }
+
+  .nav-link {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.64rem;
+  }
+
+  .app-main {
+    padding: 0.9rem;
+  }
+
+  .app-footer {
+    padding: 3rem 1rem 1.25rem;
+  }
+
+  .footer-links {
+    gap: 1.5rem;
   }
 }

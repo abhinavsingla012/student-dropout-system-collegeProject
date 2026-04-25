@@ -453,6 +453,11 @@ body:not(.light-mode) .landing-cta-band {
     padding-top: 2rem;
   }
 
+  .ledger-button {
+    width: 100%;
+    min-width: 0;
+  }
+
   .ledger-proof-strip,
   .ledger-kpi-grid,
   .landing-feature-grid {
@@ -467,5 +472,62 @@ body:not(.light-mode) .landing-cta-band {
   .ledger-watchlist-head {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .landing {
+    padding: 1rem 0 4rem;
+  }
+
+  .ledger-hero {
+    gap: 1.25rem;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .ledger-hero-title {
+    margin-bottom: 1rem;
+    font-size: clamp(2.35rem, 12vw, 3.2rem);
+  }
+
+  .ledger-hero-subtitle {
+    font-size: 0.96rem;
+    line-height: 1.65;
+  }
+
+  .ledger-hero-actions,
+  .landing-cta-actions {
+    gap: 0.75rem;
+    margin-top: 1.35rem;
+  }
+
+  .ledger-proof-strip {
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .ledger-hero-panel,
+  .ledger-proof-item,
+  .ledger-kpi-card,
+  .ledger-watchlist,
+  .landing-feature,
+  .landing-cta-band {
+    padding: 1rem;
+  }
+
+  .ledger-kpi-value {
+    font-size: 1.3rem;
+  }
+
+  .landing-section {
+    padding: 0 1rem;
+  }
+
+  .landing-section + .landing-section {
+    margin-top: 3rem;
+  }
+
+  .landing-section-head {
+    margin-bottom: 1.25rem;
   }
 }
