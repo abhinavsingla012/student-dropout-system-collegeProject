@@ -36,7 +36,6 @@ export async function assignStudentToCounselor({ currentUser, studentId, counsel
   await student.save();
 
   if (counselor) {
-    console.log(`[Notification Hub] Creating assignment notification for counselor: ${counselor.id}`);
     const notification = await Notification.create({
       recipient: counselor._id,
       sender: currentUser?._id || null,
@@ -47,7 +46,6 @@ export async function assignStudentToCounselor({ currentUser, studentId, counsel
     });
     
     if (io) {
-      console.log(`[Notification Hub] Emitting socket event to user:${counselor.id}`);
       io.to(`user:${counselor.id}`).emit('notification_received', notification);
       io.to(`counselor:${counselor.id}`).emit('student_assigned', {
         studentId: student.id,
@@ -64,7 +62,6 @@ export async function assignStudentToCounselor({ currentUser, studentId, counsel
     // Also notify old counselor of removal
     const oldCounselor = await User.findOne({ id: previousCounselorId });
     if (oldCounselor) {
-      console.log(`[Notification Hub] Creating removal notification for old counselor: ${oldCounselor.id}`);
       const removalNote = await Notification.create({
         recipient: oldCounselor._id,
         sender: currentUser?._id || null,
@@ -73,16 +70,20 @@ export async function assignStudentToCounselor({ currentUser, studentId, counsel
         message: `${student.name} was moved off your roster.`,
         data: { studentId: student.id },
       });
-      io.to(`counselor:${previousCounselorId}`).emit('notification_received', removalNote);
+      if (io) {
+        io.to(`user:${oldCounselor.id}`).emit('notification_received', removalNote);
+      }
     }
 
-    io.to(`counselor:${previousCounselorId}`).emit('student_unassigned', {
-      studentId: student.id,
-      studentName: student.name,
-      counselorId: previousCounselorId,
-      updatedBy: currentUser.id,
-      at: new Date().toISOString(),
-    });
+    if (io) {
+      io.to(`counselor:${previousCounselorId}`).emit('student_unassigned', {
+        studentId: student.id,
+        studentName: student.name,
+        counselorId: previousCounselorId,
+        updatedBy: currentUser.id,
+        at: new Date().toISOString(),
+      });
+    }
   }
 
   logInfo('Student assignment updated', {

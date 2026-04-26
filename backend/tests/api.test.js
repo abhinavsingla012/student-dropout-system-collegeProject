@@ -15,6 +15,7 @@ const { Student } = await import('../models/Student.js');
 const { Intervention } = await import('../models/Intervention.js');
 const { Counter } = await import('../models/Counter.js');
 const { AuditLog } = await import('../models/AuditLog.js');
+const { Notification } = await import('../models/Notification.js');
 
 const app = createApp();
 app.set('io', {
@@ -35,6 +36,7 @@ async function seedFixtures() {
     Student.deleteMany({}),
     Intervention.deleteMany({}),
     AuditLog.deleteMany({}),
+    Notification.deleteMany({}),
   ]);
 
   await Counter.create({ key: 'interventionId', value: 0 });
@@ -146,6 +148,7 @@ after(async () => {
     Student.deleteMany({}),
     Intervention.deleteMany({}),
     AuditLog.deleteMany({}),
+    Notification.deleteMany({}),
   ]);
   await disconnectDB();
 });
@@ -223,6 +226,10 @@ test('counselor can create intervention and audit log is written', async () => {
 
   const auditLog = await AuditLog.findOne({ action: 'INTERVENTION_CREATED', actorId: 2 }).lean();
   assert.ok(auditLog);
+
+  const adminNotification = await Notification.findOne({ type: 'INTERVENTION', 'data.studentId': 1 }).lean();
+  assert.ok(adminNotification);
+  assert.equal(adminNotification.title, 'New Intervention Logged');
 });
 
 test('admin can assign student and audit logs can be listed via v1 API', async () => {
@@ -243,4 +250,32 @@ test('admin can assign student and audit logs can be listed via v1 API', async (
   assert.equal(logsResponse.status, 200);
   assert.ok(Array.isArray(logsResponse.body.data));
   assert.ok(logsResponse.body.data.some((log) => log.action === 'STUDENT_ASSIGNMENT_UPDATED'));
+
+  const counselorToken = await login('rahul@sdas.com', TEST_COUNSELOR_PASSWORD);
+  const notificationsResponse = await request(app)
+    .get('/api/v1/notifications')
+    .set('Authorization', `Bearer ${counselorToken}`);
+
+  assert.equal(notificationsResponse.status, 200);
+  assert.ok(notificationsResponse.body.data.some((note) => note.type === 'ASSIGNMENT' && note.data.studentId === 3));
+  assert.ok(notificationsResponse.body.unreadCount >= 1);
+});
+
+test('admin metric update creates risk alert notification for assigned counselor', async () => {
+  const adminToken = await login('admin@sdas.com', TEST_ADMIN_PASSWORD);
+
+  const updateResponse = await request(app)
+    .patch('/api/v1/students/2')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ attendance: 45, gpa: 4.8 });
+
+  assert.equal(updateResponse.status, 200);
+
+  const counselorToken = await login('rahul@sdas.com', TEST_COUNSELOR_PASSWORD);
+  const notificationsResponse = await request(app)
+    .get('/api/v1/notifications')
+    .set('Authorization', `Bearer ${counselorToken}`);
+
+  assert.equal(notificationsResponse.status, 200);
+  assert.ok(notificationsResponse.body.data.some((note) => note.type === 'RISK_ALERT' && note.data.studentId === 2));
 });

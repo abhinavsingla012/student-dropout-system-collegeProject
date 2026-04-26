@@ -3,10 +3,39 @@ import { socketAuthMiddleware } from './middleware/socketAuthMiddleware.js';
 import { logInfo, logWarn } from './utils/logger.js';
 import { appConfig } from './config/appConfig.js';
 
+function buildSocketCorsOrigin() {
+  if (!appConfig.frontendOrigin || appConfig.frontendOrigin === '*') {
+    return '*';
+  }
+
+  const allowedOrigins = new Set(
+    appConfig.frontendOrigin
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+  );
+
+  for (const origin of Array.from(allowedOrigins)) {
+    try {
+      const parsed = new URL(origin);
+      if (parsed.hostname === 'localhost') {
+        allowedOrigins.add(`${parsed.protocol}//127.0.0.1${parsed.port ? `:${parsed.port}` : ''}`);
+      }
+      if (parsed.hostname === '127.0.0.1') {
+        allowedOrigins.add(`${parsed.protocol}//localhost${parsed.port ? `:${parsed.port}` : ''}`);
+      }
+    } catch {
+      // Keep the configured origin only if it cannot be parsed.
+    }
+  }
+
+  return Array.from(allowedOrigins);
+}
+
 export const createSocketServer = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: appConfig.frontendOrigin || '*'
+      origin: buildSocketCorsOrigin()
     }
   });
 

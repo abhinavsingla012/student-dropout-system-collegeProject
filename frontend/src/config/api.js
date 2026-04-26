@@ -8,9 +8,19 @@ const apiBase = envApiBase
   ? trimTrailingSlash(envApiBase)
   : `${defaultOrigin}/api`;
 
+function getOrigin(value) {
+  try {
+    return new URL(value, window.location.origin).origin;
+  } catch {
+    return defaultOrigin;
+  }
+}
+
 const socketUrl = envSocketUrl
   ? trimTrailingSlash(envSocketUrl)
-  : defaultOrigin;
+  : envApiBase
+    ? getOrigin(apiBase)
+    : defaultOrigin;
 
 export const API_BASE_URL = apiBase;
 export const SOCKET_URL = socketUrl;
