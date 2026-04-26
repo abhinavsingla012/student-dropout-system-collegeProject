@@ -78,10 +78,7 @@ function checkAuthState() {
     const hub = document.getElementById('notificationHubContainer');
     if (hub) {
       hub.classList.remove('hidden');
-      if (!window.__hubInitialized) {
-        import('./components/notificationHub.js').then(m => m.initNotificationHub());
-        window.__hubInitialized = true;
-      }
+      import('./components/notificationHub.js').then(m => m.initNotificationHub({ user }));
     }
   } else {
     disconnectRealtime();
@@ -93,6 +90,7 @@ function checkAuthState() {
 
     const hub = document.getElementById('notificationHubContainer');
     if (hub) hub.classList.add('hidden');
+    import('./components/notificationHub.js').then(m => m.resetNotificationHub());
   }
 }
 
