@@ -1,5 +1,19 @@
-import { getStudentById, listStudents } from '../services/studentService.js';
+import { getStudentById, listStudents, updateStudent } from '../services/studentService.js';
 import { sendSuccess } from '../utils/response.js';
+
+export async function patchStudent(req, res, next) {
+  try {
+    const student = await updateStudent({
+      currentUser: req.user,
+      id: Number(req.params.id),
+      payload: req.body,
+      io: req.app.get('io'),
+    });
+    return sendSuccess(req, res, { data: student, message: 'student updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+}
 
 export async function getStudents(req, res, next) {
   try {

@@ -3,6 +3,7 @@ import { Student } from '../models/Student.js';
 import { AppError } from '../middleware/errorMiddleware.js';
 import { logInfo } from '../utils/logger.js';
 import { logAuditEvent } from './auditLogService.js';
+import { Notification } from '../models/Notification.js';
 
 export async function listStaff() {
   return User.find({ role: 'counselor' }).select('id name email').lean();
@@ -34,17 +35,44 @@ export async function assignStudentToCounselor({ currentUser, studentId, counsel
   student.assignedCounselorId = counselor?.id || null;
   await student.save();
 
-  if (io && counselor) {
-    io.to(`counselor:${counselor.id}`).emit('student_assigned', {
-      studentId: student.id,
-      studentName: student.name,
-      counselorId: counselor.id,
-      counselorName: counselor.name,
-      assignedBy: currentUser.id,
-      at: new Date().toISOString(),
+  if (counselor) {
+    const notification = await Notification.create({
+      recipient: counselor._id,
+      sender: currentUser._id,
+      type: 'ASSIGNMENT',
+      title: 'New Case Assigned',
+      message: `Admin assigned ${student.name} to your roster.`,
+      data: { studentId: student.id },
     });
+
+    if (io) {
+      io.to(`counselor:${counselor.id}`).emit('notification_received', notification);
+      io.to(`counselor:${counselor.id}`).emit('student_assigned', {
+        studentId: student.id,
+        studentName: student.name,
+        counselorId: counselor.id,
+        counselorName: counselor.name,
+        assignedBy: currentUser.id,
+        at: new Date().toISOString(),
+      });
+    }
   }
+
   if (io && previousCounselorId && previousCounselorId !== parsedCounselorId) {
+    // Also notify old counselor of removal
+    const oldCounselor = await User.findOne({ id: previousCounselorId });
+    if (oldCounselor) {
+      const removalNote = await Notification.create({
+        recipient: oldCounselor._id,
+        sender: currentUser._id,
+        type: 'ASSIGNMENT',
+        title: 'Student Reassigned',
+        message: `${student.name} was moved off your roster.`,
+        data: { studentId: student.id },
+      });
+      io.to(`counselor:${previousCounselorId}`).emit('notification_received', removalNote);
+    }
+
     io.to(`counselor:${previousCounselorId}`).emit('student_unassigned', {
       studentId: student.id,
       studentName: student.name,

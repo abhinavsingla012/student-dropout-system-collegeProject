@@ -137,7 +137,7 @@ export function renderLanding() {
             <h3>Action center workflows</h3>
             <p>Move directly from an urgent case into intervention logging, follow-up notes, and recommended support types.</p>
           </article>
-          <article class="landing-feature landing-feature-contrast">
+          <article class="landing-feature surface-card">
             <span class="landing-feature-icon">04</span>
             <h3>Area and cohort analytics</h3>
             <p>Locate hotspot clusters, compare groups, and understand why pressure is rising before students disengage further.</p>

@@ -1,6 +1,6 @@
 import Chart from 'chart.js/auto';
 import { getDriverMatches } from '../utils/analyticsEngine.js';
-import { getStudentById } from '../services/studentService.js';
+import { getStudentById, updateStudent } from '../services/studentService.js';
 import { getInterventionsForStudent, saveIntervention } from '../services/interventionService.js';
 import { API_BASE_URL } from '../config/api.js';
 
@@ -277,12 +277,18 @@ async function renderDetail(app, student) {
             ${student.hasScholarship ? '<span class="badge-scholarship">Scholarship support active</span>' : ''}
           </div>
           
-          <div class="case-ownership-strip mt-6">
-            <span class="text-[10px] uppercase font-bold tracking-widest text-muted block mb-2">Case Ownership</span>
-            <div id="assignmentControl" class="flex items-center gap-3">
-              <div class="loading-spinner mini"></div>
+          ${(() => {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.role !== 'admin') return '';
+            return `
+            <div class="case-ownership-strip mt-6">
+              <span class="text-[10px] uppercase font-bold tracking-widest text-muted block mb-2">Case Ownership</span>
+              <div id="assignmentControl" class="flex items-center gap-3">
+                <div class="loading-spinner mini"></div>
+              </div>
             </div>
-          </div>
+            `;
+          })()}
         </div>
         <div class="profile-risk-panel">
           <span class="risk-label">Risk Score</span>
@@ -291,6 +297,32 @@ async function renderDetail(app, student) {
           <span class="dropout-prob">${student.dropoutProbability}% dropout probability</span>
         </div>
       </div>
+
+      ${(() => {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.role !== 'admin') return '';
+        return `
+        <div class="admin-quick-update-card mb-8">
+          <div class="section-kicker">Admin Control Panel</div>
+          <h3 class="text-lg font-bold mb-4">Manual Metric Override</h3>
+          <p class="text-xs text-muted mb-6">Updating these metrics will re-calculate the risk score and may trigger automated Counselor alerts.</p>
+          <div class="flex flex-wrap gap-4 items-end">
+            <div class="form-group mb-0 flex-1 min-w-[150px]">
+              <label>Attendance (%)</label>
+              <input type="number" id="adminAttendance" value="${student.attendance}" min="0" max="100">
+            </div>
+            <div class="form-group mb-0 flex-1 min-w-[150px]">
+              <label>GPA (Scale of 10)</label>
+              <input type="number" id="adminGpa" value="${student.gpa}" min="0" max="10" step="0.1">
+            </div>
+            <button id="adminUpdateMetrics" class="btn btn-primary" style="height: 48px; min-width: 160px;">
+              Apply Changes
+            </button>
+          </div>
+          <div id="adminUpdateStatus" class="mt-4 text-xs"></div>
+        </div>
+        `;
+      })()}
 
       <div class="metrics-grid metrics-grid-expanded">
         <div class="metric-card">
@@ -375,6 +407,8 @@ async function renderDetail(app, student) {
 
   // --- Assignment Logic (Unit III: RBAC & Staff Management) ---
   const assignmentControl = document.getElementById('assignmentControl');
+  if (!assignmentControl) return; // Exit if not Admin (section hidden)
+
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const token = localStorage.getItem('token');
   const interventionTypeSelect = document.getElementById('interventionType');
@@ -488,4 +522,26 @@ async function renderDetail(app, student) {
       message.innerHTML = `<div class="form-message error">Failed to save intervention: ${escapeHtml(error.message)}</div>`;
     }
   });
+
+  // --- Admin Quick Update Logic ---
+  const adminUpdateBtn = document.getElementById('adminUpdateMetrics');
+  if (adminUpdateBtn) {
+    adminUpdateBtn.onclick = async () => {
+      const attendance = document.getElementById('adminAttendance').value;
+      const gpa = document.getElementById('adminGpa').value;
+      const statusEl = document.getElementById('adminUpdateStatus');
+      
+      adminUpdateBtn.disabled = true;
+      statusEl.innerHTML = '<span class="text-blue-400">Processing update...</span>';
+      
+      try {
+        await updateStudent(student.id, { attendance, gpa });
+        statusEl.innerHTML = '<span class="text-green-400">Student metrics updated successfully! Alert dispatched if critical.</span>';
+        setTimeout(() => renderStudentDetail(student.id), 1500); // Refresh UI
+      } catch (err) {
+        statusEl.innerHTML = `<span class="text-red-400">Error: ${err.message}</span>`;
+        adminUpdateBtn.disabled = false;
+      }
+    };
+  }
 }

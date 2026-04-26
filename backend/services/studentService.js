@@ -1,6 +1,50 @@
 import { Student } from '../models/Student.js';
 import { AppError } from '../middleware/errorMiddleware.js';
 import { buildPaginationMeta, parseListOptions } from '../utils/queryBuilder.js';
+import { Notification } from '../models/Notification.js';
+import { logInfo } from '../utils/logger.js';
+
+// ... existing sort fields ...
+
+export async function updateStudent({ currentUser, id, payload, io }) {
+  const student = await Student.findOne({ id });
+  if (!student) {
+    throw new AppError('Student not found', 404);
+  }
+
+  // Check if attendance/GPA dropped below 50% (The "Risk Trigger")
+  const oldAttendance = student.attendance;
+  const oldGpa = student.gpa;
+  
+  // Apply updates
+  if (payload.attendance !== undefined) student.attendance = Number(payload.attendance);
+  if (payload.gpa !== undefined) student.gpa = Number(payload.gpa);
+  if (payload.grade !== undefined) student.grade = Number(payload.grade);
+  
+  await student.save();
+
+  // Logic: Trigger notification if it crossed the "halfway" mark downward
+  const isNowCritical = student.attendance < 50 || student.gpa < 5.0;
+  const wasPreviouslyCritical = oldAttendance < 50 || oldGpa < 5.0;
+
+  if (isNowCritical && !wasPreviouslyCritical && student.assignedCounselor) {
+    const alert = await Notification.create({
+      recipient: student.assignedCounselor,
+      type: 'RISK_ALERT',
+      title: 'CRITICAL: High Risk Alert',
+      message: `${student.name} has dropped below the 50% threshold (Attendance: ${student.attendance}%, GPA: ${student.gpa}). Immediate intervention recommended.`,
+      data: { studentId: student.id },
+    });
+
+    if (io) {
+      io.to(`user:${student.assignedCounselorId}`).emit('notification_received', alert);
+    }
+    
+    logInfo('Risk alert triggered', { studentId: student.id, counselorId: student.assignedCounselorId });
+  }
+
+  return student.toJSON();
+}
 
 const STUDENT_SORT_FIELDS = new Set([
   'id',

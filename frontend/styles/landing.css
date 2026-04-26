@@ -134,7 +134,7 @@ body:not(.light-mode) .landing-orb-b {
 .ledger-proof-item {
   padding: 1rem 1.1rem;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--card-border);
   box-shadow: var(--card-shadow);
 }
@@ -208,7 +208,7 @@ body:not(.light-mode) .ledger-proof-item {
 .ledger-kpi-card {
   padding: 1rem;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.48);
+  background: rgba(255, 255, 255, 0.94);
   border: 1px solid var(--card-border);
 }
 
@@ -255,7 +255,7 @@ body:not(.light-mode) .ledger-kpi-card {
 .ledger-watchlist {
   padding: 1rem;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.52);
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--card-border);
 }
 

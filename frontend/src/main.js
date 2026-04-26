@@ -68,12 +68,20 @@ function checkAuthState() {
     appNav?.classList.remove('hidden');
     headerPresenceEl?.classList.remove('hidden');
     loginLink?.classList.add('hidden');
-    
-    // Role-based links (Unit III)
     if (user.role === 'admin') {
       navCounselors?.classList.remove('hidden');
     } else {
       navCounselors?.classList.add('hidden');
+    }
+
+    // Initialize Notification Hub if not already done
+    const hub = document.getElementById('notificationHubContainer');
+    if (hub) {
+      hub.classList.remove('hidden');
+      if (!window.__hubInitialized) {
+        import('./components/notificationHub.js').then(m => m.initNotificationHub());
+        window.__hubInitialized = true;
+      }
     }
   } else {
     disconnectRealtime();
@@ -82,6 +90,9 @@ function checkAuthState() {
     headerPresenceEl?.classList.add('hidden');
     loginLink?.classList.remove('hidden');
     navCounselors?.classList.add('hidden');
+
+    const hub = document.getElementById('notificationHubContainer');
+    if (hub) hub.classList.add('hidden');
   }
 }
 

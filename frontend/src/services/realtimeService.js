@@ -113,4 +113,12 @@ export const syncRealtimeAuth = ({ token, user }) => {
       'warning'
     );
   });
+
+  socket.on('notification_received', (payload) => {
+    // Notify any registered listeners (like our new hub)
+    const event = new CustomEvent('app:notification', { detail: payload });
+    window.dispatchEvent(event);
+    
+    showToast(payload.title, payload.message, payload.type === 'RISK_ALERT' ? 'warning' : 'info');
+  });
 };

@@ -56,6 +56,24 @@ export async function getStudentById(id) {
   return enrichStudent(raw);
 }
 
+// ── Update student metrics (Admin only) ──
+export async function updateStudent(id, payload) {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API_BASE}/students/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+  if (handleUnauthorized(res)) {
+    throw new Error('Session expired. Please log in again.');
+  }
+  if (!res.ok) throw new Error(`Failed to update student: ${res.statusText}`);
+  return res.json();
+}
+
 // ── Filter students (client-side filtering on enriched data) ──
 export async function filterStudents({ status = 'all', area = 'all', search = '' } = {}) {
   const students = await getAllStudents();

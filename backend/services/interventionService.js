@@ -4,6 +4,8 @@ import { AppError } from '../middleware/errorMiddleware.js';
 import { buildPaginationMeta, parseListOptions } from '../utils/queryBuilder.js';
 import { logInfo } from '../utils/logger.js';
 import { logAuditEvent } from './auditLogService.js';
+import { Notification } from '../models/Notification.js';
+import { User } from '../models/User.js';
 
 const INTERVENTION_SORT_FIELDS = new Set([
   'id',
@@ -78,12 +80,36 @@ export async function createIntervention({ currentUser, payload, io }) {
 
   const interventionPayload = newIntervention.toJSON();
 
+  // Notify Admins
+  const admins = await User.find({ role: 'admin' });
+  const adminNotifications = await Promise.all(
+    admins.map((admin) =>
+      Notification.create({
+        recipient: admin._id,
+        sender: currentUser?._id || null,
+        type: 'INTERVENTION',
+        title: 'New Intervention Logged',
+        message: `${currentUser?.name || 'A counselor'} logged a ${interventionPayload.type} for ${interventionPayload.studentName}.`,
+        data: {
+          studentId: interventionPayload.studentId,
+          interventionId: interventionPayload.id,
+        },
+      })
+    )
+  );
+
   if (io) {
     const socketPayload = {
       ...interventionPayload,
       createdBy: currentUser?.id || null,
       at: new Date().toISOString(),
     };
+
+    // Live update for notifications
+    adminNotifications.forEach((note, idx) => {
+      io.to(`user:${admins[idx].id}`).emit('notification_received', note);
+    });
+
     if (student.assignedCounselorId) {
       io.to(`counselor:${student.assignedCounselorId}`).emit('intervention_logged', socketPayload);
     }

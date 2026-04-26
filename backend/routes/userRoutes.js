@@ -1,6 +1,9 @@
 import express from 'express';
 import { assignStudent, getStaff } from '../controllers/userController.js';
 import { protect, restrictTo } from '../middleware/authMiddleware.js';
+import { AppError } from '../middleware/errorMiddleware.js';
+import { Notification } from '../models/Notification.js';
+import { logInfo } from '../utils/logger.js';
 import { validateRequest } from '../middleware/validateRequest.js';
 import { assignStudentValidator } from '../validators/userValidators.js';
 

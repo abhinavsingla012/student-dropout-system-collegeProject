@@ -8,6 +8,7 @@ import userRoutes from './routes/userRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
 import interventionRoutes from './routes/interventionRoutes.js';
 import auditLogRoutes from './routes/auditLogRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 import { protect } from './middleware/authMiddleware.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 import { notFoundHandler } from './middleware/notFoundMiddleware.js';
@@ -18,10 +19,30 @@ function buildCorsOptions() {
     return {};
   }
 
-  const allowedOrigins = appConfig.frontendOrigin.split(',').map((origin) => origin.trim());
+  const allowedOrigins = new Set(
+    appConfig.frontendOrigin
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+  );
+
+  for (const origin of Array.from(allowedOrigins)) {
+    try {
+      const parsed = new URL(origin);
+      if (parsed.hostname === 'localhost') {
+        allowedOrigins.add(`${parsed.protocol}//127.0.0.1${parsed.port ? `:${parsed.port}` : ''}`);
+      }
+      if (parsed.hostname === '127.0.0.1') {
+        allowedOrigins.add(`${parsed.protocol}//localhost${parsed.port ? `:${parsed.port}` : ''}`);
+      }
+    } catch {
+      // Ignore malformed development origins and keep the configured value only.
+    }
+  }
+
   return {
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.has(origin)) {
         return callback(null, true);
       }
       return callback(new Error('Origin not allowed by CORS'));
@@ -70,6 +91,9 @@ export function createApp() {
 
   app.use('/api/v1/audit-logs', setApiMode('versioned'), auditLogRoutes);
   app.use('/api/audit-logs', setApiMode('legacy'), auditLogRoutes);
+
+  app.use('/api/v1/notifications', setApiMode('versioned'), notificationRoutes);
+  app.use('/api/notifications', setApiMode('legacy'), notificationRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
