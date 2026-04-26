@@ -24,7 +24,7 @@ export const protect = async (req, res, next) => {
     }
 
     const decoded = verifyAuthToken(token);
-    const currentUser = await User.findOne({ id: decoded.id }).lean();
+    const currentUser = await User.findOne({ id: decoded.id });
 
     if (!currentUser) {
       throw new AppError('The user belonging to this token no longer exists.', 401);

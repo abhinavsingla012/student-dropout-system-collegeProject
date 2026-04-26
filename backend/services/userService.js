@@ -36,17 +36,19 @@ export async function assignStudentToCounselor({ currentUser, studentId, counsel
   await student.save();
 
   if (counselor) {
+    console.log(`[Notification Hub] Creating assignment notification for counselor: ${counselor.id}`);
     const notification = await Notification.create({
       recipient: counselor._id,
-      sender: currentUser._id,
+      sender: currentUser?._id || null,
       type: 'ASSIGNMENT',
-      title: 'New Case Assigned',
-      message: `Admin assigned ${student.name} to your roster.`,
+      title: 'New Student Assigned',
+      message: `${student.name} has been added to your roster.`,
       data: { studentId: student.id },
     });
-
+    
     if (io) {
-      io.to(`counselor:${counselor.id}`).emit('notification_received', notification);
+      console.log(`[Notification Hub] Emitting socket event to user:${counselor.id}`);
+      io.to(`user:${counselor.id}`).emit('notification_received', notification);
       io.to(`counselor:${counselor.id}`).emit('student_assigned', {
         studentId: student.id,
         studentName: student.name,
@@ -58,13 +60,14 @@ export async function assignStudentToCounselor({ currentUser, studentId, counsel
     }
   }
 
-  if (io && previousCounselorId && previousCounselorId !== parsedCounselorId) {
+  if (previousCounselorId && previousCounselorId !== parsedCounselorId) {
     // Also notify old counselor of removal
     const oldCounselor = await User.findOne({ id: previousCounselorId });
     if (oldCounselor) {
+      console.log(`[Notification Hub] Creating removal notification for old counselor: ${oldCounselor.id}`);
       const removalNote = await Notification.create({
         recipient: oldCounselor._id,
-        sender: currentUser._id,
+        sender: currentUser?._id || null,
         type: 'ASSIGNMENT',
         title: 'Student Reassigned',
         message: `${student.name} was moved off your roster.`,
