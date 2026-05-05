@@ -232,7 +232,7 @@ export async function renderCounselors() {
           role: 'counselor'
         };
 
-        const res = await fetch(`${API_BASE_URL}/users`, {
+        const res = await fetch(`${API_BASE_URL}/v1/users`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

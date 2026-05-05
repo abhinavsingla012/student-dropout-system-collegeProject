@@ -1,5 +1,5 @@
 import express from 'express';
-import { assignStudent, getStaff } from '../controllers/userController.js';
+import { assignStudent, getStaff, addStaff } from '../controllers/userController.js';
 import { protect, restrictTo } from '../middleware/authMiddleware.js';
 import { AppError } from '../middleware/errorMiddleware.js';
 import { Notification } from '../models/Notification.js';
