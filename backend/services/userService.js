@@ -4,7 +4,7 @@ import { AppError } from '../middleware/errorMiddleware.js';
 import { logInfo } from '../utils/logger.js';
 import { logAuditEvent } from './auditLogService.js';
 import { Notification } from '../models/Notification.js';
-import { getNextSequence } from '../models/Counter.js';
+import { Counter, getNextSequence } from '../models/Counter.js';
 
 export async function createStaff({ currentUser, payload }) {
   const { name, email, password, role = 'counselor' } = payload;
@@ -15,7 +15,16 @@ export async function createStaff({ currentUser, payload }) {
     throw new AppError('A user with this email already exists', 400);
   }
 
-  // Get next numeric ID
+  // Ensure counter is synced with the highest existing user ID
+  const maxUser = await User.findOne().sort({ id: -1 }).select('id').lean();
+  const maxId = maxUser?.id ?? 0;
+  await Counter.findOneAndUpdate(
+    { key: 'user_id', value: { $lt: maxId } },
+    { $set: { value: maxId } },
+    { upsert: true }
+  );
+
+  // Get next numeric ID (now guaranteed to be above all existing IDs)
   const id = await getNextSequence('user_id');
 
   // Create user (Password will be hashed by Mongoose pre-save hook)
