@@ -5,7 +5,7 @@ import { AppError } from '../middleware/errorMiddleware.js';
 import { Notification } from '../models/Notification.js';
 import { logInfo } from '../utils/logger.js';
 import { validateRequest } from '../middleware/validateRequest.js';
-import { assignStudentValidator } from '../validators/userValidators.js';
+import { assignStudentValidator, createStaffValidator } from '../validators/userValidators.js';
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ router.use(protect);
 router.use(restrictTo('admin'));
 
 router.get('/staff', getStaff);
-router.post('/', addStaff);
+router.post('/', createStaffValidator, validateRequest, addStaff);
 router.patch('/assign', assignStudentValidator, validateRequest, assignStudent);
 
 export default router;

@@ -5,7 +5,6 @@ import { logInfo } from '../utils/logger.js';
 import { logAuditEvent } from './auditLogService.js';
 import { Notification } from '../models/Notification.js';
 import { getNextSequence } from '../models/Counter.js';
-import bcrypt from 'bcryptjs';
 
 export async function createStaff({ currentUser, payload }) {
   const { name, email, password, role = 'counselor' } = payload;
@@ -20,12 +19,11 @@ export async function createStaff({ currentUser, payload }) {
   const id = await getNextSequence('user_id');
 
   // Create user (Password will be hashed by Mongoose pre-save hook)
-  // Note: Ensure your User.js model has a pre-save hook for password hashing.
   const newUser = await User.create({
     id,
     name,
     email,
-    password, // This will be hashed by the model if implemented there, otherwise hash here
+    password, 
     role,
   });
 
