@@ -4,7 +4,6 @@ import { buildPaginationMeta, parseListOptions } from '../utils/queryBuilder.js'
 import { Notification } from '../models/Notification.js';
 import { logInfo } from '../utils/logger.js';
 
-// ... existing sort fields ...
 
 export async function updateStudent({ currentUser, id, payload, io }) {
   const student = await Student.findOne({ id });

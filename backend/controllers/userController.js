@@ -1,5 +1,17 @@
-import { assignStudentToCounselor, listStaff } from '../services/userService.js';
+import { assignStudentToCounselor, listStaff, createStaff } from '../services/userService.js';
 import { sendSuccess } from '../utils/response.js';
+
+export async function addStaff(req, res, next) {
+  try {
+    const staff = await createStaff({
+      currentUser: req.user,
+      payload: req.body,
+    });
+    return sendSuccess(req, res, { data: staff, message: 'Staff member created successfully' });
+  } catch (error) {
+    next(error);
+  }
+}
 
 export async function getStaff(req, res, next) {
   try {

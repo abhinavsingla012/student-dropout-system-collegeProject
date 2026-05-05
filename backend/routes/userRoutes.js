@@ -13,6 +13,7 @@ router.use(protect);
 router.use(restrictTo('admin'));
 
 router.get('/staff', getStaff);
+router.post('/', addStaff);
 router.patch('/assign', assignStudentValidator, validateRequest, assignStudent);
 
 export default router;

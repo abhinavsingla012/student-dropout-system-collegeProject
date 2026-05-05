@@ -2393,3 +2393,76 @@ body.light-mode .notification-item:hover {
 body.light-mode .notification-item.unread {
   background: rgba(56, 189, 248, 0.06);
 }
+
+/* ── Staff Management Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-overlay.hidden { display: none; }
+
+.modal-content {
+  width: 100%;
+  max-width: 480px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+  animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.modal-header h2 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-btn:hover { color: var(--accent-red); }
+
+.modal-form .form-group { margin-bottom: 1.5rem; }
+.modal-form label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+.modal-form input { width: 100%; height: 48px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 0 1rem; color: var(--text-primary); outline: none; }
+.modal-form input:focus { border-color: var(--accent-purple); background: rgba(255,255,255,0.05); }
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.form-actions button { flex: 1; height: 48px; font-weight: 700; font-size: 0.9rem; }
+.btn-secondary { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); color: var(--text-secondary); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+.btn-secondary:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

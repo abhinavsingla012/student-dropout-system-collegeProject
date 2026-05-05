@@ -4,6 +4,46 @@ import { AppError } from '../middleware/errorMiddleware.js';
 import { logInfo } from '../utils/logger.js';
 import { logAuditEvent } from './auditLogService.js';
 import { Notification } from '../models/Notification.js';
+import { getNextSequence } from '../models/Counter.js';
+import bcrypt from 'bcryptjs';
+
+export async function createStaff({ currentUser, payload }) {
+  const { name, email, password, role = 'counselor' } = payload;
+
+  // Check if email already exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new AppError('A user with this email already exists', 400);
+  }
+
+  // Get next numeric ID
+  const id = await getNextSequence('user_id');
+
+  // Create user (Password will be hashed by Mongoose pre-save hook)
+  // Note: Ensure your User.js model has a pre-save hook for password hashing.
+  const newUser = await User.create({
+    id,
+    name,
+    email,
+    password, // This will be hashed by the model if implemented there, otherwise hash here
+    role,
+  });
+
+  await logAuditEvent({
+    actor: currentUser,
+    action: 'USER_CREATED',
+    entityType: 'user',
+    entityId: id,
+    metadata: { email, role },
+  });
+
+  return {
+    id: newUser.id,
+    name: newUser.name,
+    email: newUser.email,
+    role: newUser.role,
+  };
+}
 
 export async function listStaff() {
   return User.find({ role: 'counselor' }).select('id name email').lean();

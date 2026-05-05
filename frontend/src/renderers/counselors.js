@@ -20,15 +20,47 @@ export async function renderCounselors() {
   app.classList.remove('full-width');
 
   app.innerHTML = `
-    <div class="page-header">
+    <div class="page-header flex justify-between items-end">
       <div>
         <span class="page-kicker">Staff Management</span>
         <h1>Counselor Oversight</h1>
       </div>
+      <button id="addStaffBtn" class="btn-primary flex items-center gap-2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+        Add Staff Member
+      </button>
     </div>
 
     <div class="counselor-grid" id="counselorContainer">
       <div class="loading-state">Initializing staff records...</div>
+    </div>
+
+    <!-- Add Staff Modal -->
+    <div id="addStaffModal" class="modal-overlay hidden">
+      <div class="modal-content surface-card">
+        <div class="modal-header">
+          <h2>Register New Counselor</h2>
+          <button id="closeModal" class="close-btn">&times;</button>
+        </div>
+        <form id="addStaffForm" class="modal-form">
+          <div class="form-group">
+            <label for="staffName">Full Name</label>
+            <input type="text" id="staffName" required placeholder="e.g. Dr. Sarah Chen">
+          </div>
+          <div class="form-group">
+            <label for="staffEmail">Institutional Email</label>
+            <input type="email" id="staffEmail" required placeholder="name@college.edu">
+          </div>
+          <div class="form-group">
+            <label for="staffPassword">Initial Password</label>
+            <input type="password" id="staffPassword" required placeholder="••••••••">
+          </div>
+          <div class="form-actions">
+            <button type="button" id="cancelBtn" class="btn-secondary">Cancel</button>
+            <button type="submit" class="btn-primary">Create Account</button>
+          </div>
+        </form>
+      </div>
     </div>
   `;
 
@@ -168,6 +200,62 @@ export async function renderCounselors() {
           button.textContent = 'Assign';
         }
       });
+    });
+
+    // Modal Logic
+    const modal = document.getElementById('addStaffModal');
+    const addBtn = document.getElementById('addStaffBtn');
+    const closeBtn = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const form = document.getElementById('addStaffForm');
+
+    const toggleModal = (show) => {
+      modal.classList.toggle('hidden', !show);
+      if (!show) form.reset();
+    };
+
+    addBtn?.addEventListener('click', () => toggleModal(true));
+    closeBtn?.addEventListener('click', () => toggleModal(false));
+    cancelBtn?.addEventListener('click', () => toggleModal(false));
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating...';
+
+      try {
+        const payload = {
+          name: document.getElementById('staffName').value,
+          email: document.getElementById('staffEmail').value,
+          password: document.getElementById('staffPassword').value,
+          role: 'counselor'
+        };
+
+        const res = await fetch(`${API_BASE_URL}/users`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (handleUnauthorized(res)) return;
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || 'Failed to create counselor');
+        }
+
+        toggleModal(false);
+        renderCounselors(); // Refresh the grid
+      } catch (err) {
+        alert(`Creation Failed: ${err.message}`);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
+      }
     });
 
   } catch (error) {
